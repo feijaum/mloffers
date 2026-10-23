@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Observatório ML — Exportador de Ofertas",
+  "version": "1.0.0",
+  "description": "Captura sob demanda ofertas visíveis do Mercado Livre e exporta dados comerciais em JSON/CSV para o Observatório Web.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "alarms",
+    "downloads"
+  ],
+  "host_permissions": [
+    "https://www.mercadolivre.com.br/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "minimum_chrome_version": "114"
+}
