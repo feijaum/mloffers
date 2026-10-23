@@ -167,5 +167,26 @@ document.querySelectorAll('[data-copy-field]').forEach(b=>b.onclick=()=>copy($(b
 $('copy-kit').onclick=()=>{const x=active();if(x)copy(kitText(x))};
 $('save-kit').onclick=()=>{const x=active();if(x)download('kit-'+x.id+'.txt',kitText(x));};
 $('save-image').onclick=()=>{const x=active();if(x?.image)window.open(x.image,'_blank','noopener,noreferrer');else toast('Imagem não registrada para este produto.')};
-(async()=>{try{db=await openDatabase();await refresh()}catch(e){$('import-status').textContent='Banco local indisponível: '+e.message;toast('Este navegador não permite armazenamento local; confira as configurações de privacidade.')}})();
+async function consumeSharedFiles(){
+ if(!('caches' in window))return;
+ const cache=await caches.open('observatorio-ml-shares-v1');
+ const manifestURL=new URL('./__pending_manifest',location.href);
+ const manifestResponse=await cache.match(manifestURL);
+ if(!manifestResponse)return;
+ const manifest=await manifestResponse.json(),files=[];
+ for(const item of manifest){
+  const key=new URL(item.key,location.href),response=await cache.match(key);
+  if(response){
+   const blob=await response.blob();
+   files.push(new File([blob],item.name||'ofertas.html',{type:item.type||blob.type||'application/octet-stream'}));
+  }
+  await cache.delete(key);
+ }
+ await cache.delete(manifestURL);
+ if(files.length){
+  await importFiles(files);
+  toast(files.length+' arquivo(s) recebido(s) pelo compartilhamento do celular.');
+ }
+}
+(async()=>{try{db=await openDatabase();await refresh();if(new URLSearchParams(location.search).has('share_error'))toast('Arquivo compartilhado inválido ou acima de 15 MB.');await consumeSharedFiles();}catch(e){$('import-status').textContent='Falha no banco ou compartilhamento: '+e.message;toast('Não foi possível iniciar: '+e.message);}})();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
