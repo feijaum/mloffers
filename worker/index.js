@@ -1,3 +1,4 @@
+import { registerEligibleComments } from "./comment-matcher.js";
 // Observatório ML: assets públicos e recebimento autenticado de webhooks Instagram.
 // O sistema armazena eventos em D1, MAS NUNCA envia mensagens automaticamente nesta fase.
 const encoder=new TextEncoder();
@@ -30,6 +31,9 @@ export default {
     await env.DB.prepare("INSERT OR IGNORE INTO instagram_webhook_events (event_hash,event_type,payload_json,status,received_at) VALUES (?1,?2,?3,'pending',datetime('now'))")
      .bind(key,"instagram",JSON.stringify(data)).run();
    }catch(error){console.error("Instagram webhook persistence unavailable",String(error).slice(0,180));return json({error:"Falha ao registrar evento"},503)}
+   // Eventos já gravados podem ser reenviados; o matcher usa comment_id como chave única.
+   try{await registerEligibleComments(data,env.DB)}
+   catch(error){console.error("Instagram comment classification failed",String(error).slice(0,180));return json({error:"Falha na classificação; o evento foi armazenado para recuperação"},503)}
    return new Response("EVENT_RECEIVED",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
   }
   if(url.pathname.startsWith("/api/instagram/"))return json({error:"Gestão Instagram ainda não ativada"},503);
