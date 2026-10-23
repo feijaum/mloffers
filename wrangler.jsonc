@@ -9,5 +9,12 @@
       "/api/*"
     ]
   },
-  "main": "./worker/index.js"
+  "main": "./worker/index.js",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "observatorio-ml-db",
+      "database_id": "b72c5e4b-9117-4a26-a906-bb3203e01d4a"
+    }
+  ]
 }
