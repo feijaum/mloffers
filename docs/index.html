@@ -61,6 +61,23 @@
 <div class="video-rank-cards" id="video-rank-cards"><p class="fine">Importe suas ofertas para visualizar o ranking.</p></div>
 </section>
 <label class="field"><span>Prompt editável para o vídeo</span><textarea id="video-prompt" rows="10" placeholder="Selecione uma oferta para montar o roteiro."></textarea></label>
+<section class="video-overlay-panel" aria-label="Kit de textos para edição">
+<div class="video-overlay-head"><div><div class="eyebrow">COPY SEM ERROS DE TIPOGRAFIA</div><h3>Textos de capa e overlay</h3><p class="fine">Gerados automaticamente para o produto escolhido no ranking. Edite e copie para CapCut, Canva ou Instagram depois de gerar o vídeo sem textos.</p></div><button type="button" class="btn secondary small" id="overlay-download">Baixar textos .txt</button></div>
+<div class="overlay-layout">
+<div class="overlay-fields">
+<div class="overlay-grid">
+<label class="field"><span>Título da capa</span><input id="overlay-title" maxlength="70" placeholder="Achadinho do dia"></label>
+<label class="field"><span>Subtítulo</span><textarea id="overlay-subtitle" rows="2" placeholder="Nome curto do produto"></textarea></label>
+<label class="field"><span>CTA para comentários</span><input id="overlay-cta" maxlength="70" placeholder="Comente EU QUERO"></label>
+<label class="field"><span>Texto de apoio</span><input id="overlay-support" maxlength="80" placeholder="Vale conferir"></label>
+</div>
+<label class="field"><span>Legenda do Instagram</span><textarea id="overlay-caption" rows="6" placeholder="Legenda pronta para publicar"></textarea></label>
+<label class="field"><span>Hashtags</span><textarea id="overlay-hashtags" rows="2" placeholder="#achadinhos #ofertas"></textarea></label>
+<div class="hero-buttons"><button type="button" class="btn secondary small" data-copy-overlay="title">Copiar título</button><button type="button" class="btn secondary small" data-copy-overlay="cta">Copiar CTA</button><button type="button" class="btn secondary small" data-copy-overlay="caption">Copiar legenda</button><button type="button" class="btn primary small" data-copy-overlay="all">Copiar tudo</button></div>
+</div>
+<div class="overlay-preview" aria-label="Prévia da disposição dos textos no vídeo"><div class="overlay-preview-frame"><div class="overlay-preview-top"><strong id="overlay-preview-title">Título da capa</strong><span id="overlay-preview-subtitle">Subtítulo</span></div><div class="overlay-preview-center">ÁREA DO PRODUTO</div><div class="overlay-preview-bottom" id="overlay-preview-cta">Comente EU QUERO</div></div><p class="fine">Prévia de posicionamento. Os textos não são incorporados ao MP4 automaticamente.</p></div>
+</div>
+</section>
 <p class="fine">A imagem da oferta será enviada ao Gemini Omni como quadro inicial quando estiver disponível em formato compatível. O modelo pode não reproduzir a imagem com fidelidade total; revise antes de publicar.</p>
 <label class="field"><span><input id="video-use-image" type="checkbox" checked> Usar a imagem original do produto como quadro inicial do vídeo (quando disponível)</span></label>
 <div id="video-flow-actions" class="flow-actions">
