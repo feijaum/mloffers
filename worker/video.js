@@ -54,8 +54,9 @@ export async function videoApi(request,env,url) {
    try{
     const imageUrl=new URL(body.imageUrl);
     if(imageUrl.protocol!=="https:"||!["http2.mlstatic.com","http2.mlstatic.com.ar"].includes(imageUrl.hostname))throw Error("Imagem precisa ser hospedada no Mercado Livre");
-    const response=await fetch(imageUrl.toString(),{redirect:"error"});
-    if(!response.ok)throw Error("Imagem do produto indisponível");
+    const response=await fetch(imageUrl.toString(),{redirect:"manual"});
+    if(response.status>=300&&response.status<400)throw Error("O servidor de imagens solicitou um redirecionamento; use outra imagem da oferta");
+    if(!response.ok)throw Error("Imagem do produto indisponível (HTTP "+response.status+")");
     const mime=response.headers.get("content-type")?.split(";")[0]?.trim();
     if(!["image/png","image/jpeg","image/webp"].includes(mime))throw Error("Formato de imagem incompatível");
     if(Number(response.headers.get("content-length")||0)>4*1024*1024)throw Error("Imagem acima de 4 MB");
