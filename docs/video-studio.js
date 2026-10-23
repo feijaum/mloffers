@@ -57,3 +57,48 @@ window.addEventListener("observatorio:ranking",e=>{ranking=e.detail.offers||[];p
 window.addEventListener("observatorio:select-offer",e=>{v("video-product").value=e.detail.id;renderSelection()});
 v("video-open-ranking").onclick=()=>{document.querySelector('[data-tab="ofertas"]')?.click();document.getElementById("ranking")?.scrollIntoView({behavior:"smooth"});};
 connect();
+
+
+function mode(type){
+ const flow=type==="flow";
+ v("video-flow-actions").hidden=!flow;v("video-api-actions").hidden=flow;
+ v("video-mode-flow").className="btn "+(flow?"primary":"secondary");v("video-mode-api").className="btn "+(!flow?"primary":"secondary");
+ v("video-mode-flow").setAttribute("aria-pressed",String(flow));
+ v("video-mode-api").setAttribute("aria-pressed",String(!flow));
+ v("video-mode-note").textContent=flow?"Use seus créditos do Google Flow; confirme a geração lá, sem cobranças da API do Observatório.":"Geração pela API independente: não utiliza o saldo de créditos do Google Flow e pode gerar custos.";
+}
+function downloadText(name,content){
+ const blob=new Blob([content],{type:"text/plain;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=name;document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+v("video-mode-flow").onclick=()=>mode("flow");
+v("video-mode-api").onclick=()=>mode("api");
+v("video-flow-copy").onclick=async()=>{
+ if(!selected){status("Selecione um produto do ranking.");return}
+ try{await navigator.clipboard.writeText(v("video-prompt").value);status("Prompt copiado! Agora abra o Flow e envie a imagem do produto.")}catch{status("Não foi possível copiar. Selecione o texto do prompt e copie manualmente.")}
+};
+v("video-flow-image").onclick=()=>{
+ if(!selected?.image){status("A oferta não possui imagem registrada.");return}
+ window.open(selected.image,"_blank","noopener,noreferrer");
+};
+v("video-flow-kit").onclick=()=>{
+ if(!selected){status("Selecione um produto do ranking.");return}
+ downloadText("flow-"+selected.id+".txt",[
+  "PRODUTO: "+selected.title,
+  "ID: "+selected.id,
+  "POSIÇÃO NO RANKING: "+((ranking.length?ranking:offers).findIndex(x=>x.id===selected.id)+1),
+  "FOTO DE REFERÊNCIA: "+(selected.image||"Indisponível"),
+  "URL DO PRODUTO: "+(selected.url||"Indisponível"),
+  "LINK DE AFILIADO: "+(selected.affiliate||"Preencha antes de publicar"),
+  "CHAMADA: Comente EU QUERO",
+  "",
+  "=== PROMPT PARA GOOGLE FLOW ===",
+  v("video-prompt").value,
+  "",
+  "NOTA: O pacote não gera o vídeo. Cole o prompt e anexe a imagem no Google Flow."
+ ].join("\n"));
+ status("Pacote do produto baixado.");
+};
+mode("flow");
