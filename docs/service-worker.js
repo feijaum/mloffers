@@ -1,8 +1,8 @@
 /* Observatório ML PWA: cache apenas dos recursos da aplicação.
    Capturas compartilhadas pelo usuário são armazenadas TEMPORARIAMENTE no navegador. */
-const CACHE='observatorio-ml-pages-v2';
+const CACHE='observatorio-ml-pages-v3';
 const SHARES='observatorio-ml-shares-v1';
-const ASSETS=['./','./index.html','./style.css','./app.js','./icon.svg','./manifest.webmanifest'];
+const ASSETS=['./','./index.html','./style.css','./app.js','./video-studio.js','./icon.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))
 );
@@ -29,7 +29,7 @@ self.addEventListener('fetch',event=>{
  if(req.method==='POST'&&url.origin===self.location.origin&&url.pathname===scoped('./shared').pathname){
   event.respondWith(receiveSharedFiles(req));return;
  }
- if(req.method!=='GET'||url.origin!==self.location.origin)return;
+ if(req.method!=='GET'||url.origin!==self.location.origin||url.pathname.startsWith('/api/'))return;
  event.respondWith(fetch(req).then(resp=>{
   if(resp.ok&&!url.pathname.includes('__pending_')){
    const clone=resp.clone();
