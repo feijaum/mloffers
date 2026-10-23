@@ -145,7 +145,19 @@ async function copy(text){try{await navigator.clipboard.writeText(text);toast('T
 function download(filename,text,mime='text/plain'){const blob=new Blob([text],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function exportCSV(){const cols=['id','title','seller','price','previous','discount','rating','sold','source','image','url','affiliate','priority','conversion','content'];const lines=[cols.join(','),...offers.map(a=>{const x=score(a);return cols.map(k=>'"'+String(x[k]??'').replace(/"/g,'""')+'"').join(',')})];download('observatorio-ofertas.csv','\uFEFF'+lines.join('\r\n'),'text/csv;charset=utf-8');toast('CSV exportado.')}
 async function clearDatabase(){if(!confirm('Excluir todas as ofertas salvas NESTE dispositivo? Isso não apaga nada do seu GitHub ou do Instagram.'))return;const tx=db.transaction(['offers','meta'],'readwrite');tx.objectStore('offers').clear();tx.objectStore('meta').clear();await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=()=>j(tx.error)});await refresh();toast('Dados locais removidos.')}
+async function loadPublishedFeed(){
+ try{
+  const response=await fetch('./data/ofertas.json',{cache:'no-store'});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const payload=await response.json();
+  const rows=parseJSON(JSON.stringify(payload));
+  if(!rows.length){toast('O feed público ainda está vazio. Publique ofertas no arquivo docs/data/ofertas.json.');return}
+  const r=await saveBatch(rows);await writeMeta('files',(await readMeta('files'))+1);
+  await refresh();toast('Feed importado: '+r.found+' novos produtos; '+r.updated+' atualizados.');
+ }catch(error){toast('Não foi possível carregar o feed: '+error.message)}
+}
 $('files').addEventListener('change',e=>importFiles(e.target.files));
+$('load-feed').onclick=loadPublishedFeed;
 const drop=$('drop');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');importFiles(e.dataTransfer.files)});
 $('search').addEventListener('input',renderRanking);$('sort').addEventListener('change',renderRanking);$('limit').addEventListener('change',renderRanking);
 $('clear').onclick=clearDatabase;$('export-csv').onclick=exportCSV;$('export-json').onclick=()=>{download('observatorio-backup.json',JSON.stringify({format:'observatorio-ml-offers',version:1,offers},null,2),'application/json');toast('Backup JSON exportado.')};
