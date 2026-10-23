@@ -53,7 +53,8 @@
 <div><label class="field"><span>Prévia da oferta</span><div id="video-product-preview" class="video-product-preview">Importe ofertas na aba Ofertas para começar.</div></label></div>
 </div>
 <label class="field"><span>Prompt editável para o vídeo</span><textarea id="video-prompt" rows="10" placeholder="Selecione uma oferta para montar o roteiro."></textarea></label>
-<p class="fine">Nesta primeira versão da API, a geração usa o prompt de texto. A imagem da oferta aparece como referência na interface, mas ainda não é enviada como referência visual ao Veo. Você pode continuar usando imagem + prompt manualmente no Flow.</p>
+<p class="fine">A imagem da oferta será enviada ao Veo como quadro inicial quando estiver disponível em formato compatível. O modelo pode não reproduzir a imagem com fidelidade total; revise antes de publicar.</p>
+<label class="field"><span><input id="video-use-image" type="checkbox" checked> Usar a imagem original do produto como quadro inicial do vídeo (quando disponível)</span></label>
 <div id="video-unauth"><label class="field"><span>Senha do Estúdio de Vídeos</span><input id="video-password" type="password" autocomplete="current-password" placeholder="Senha configurada no Secret do Cloudflare"></label><button type="button" class="btn secondary" id="video-login">Entrar no estúdio</button></div>
 <div id="video-auth" hidden><div class="import-tools"><span>Estúdio autenticado</span><button type="button" class="btn ghost small" id="video-logout">Sair</button></div>
 <label class="field"><span><input id="video-confirm" type="checkbox"> Confirmo que esta geração pode consumir créditos pagos da minha conta Google.</span></label>
