@@ -1,0 +1,16 @@
+# Arquivos privados e gerados
+.env
+.env.*
+!.env.example
+node_modules/
+.wrangler/
+__pycache__/
+*.pyc
+*.sqlite3
+*.db
+*.session
+*.har
+capturas/
+**/capturas/
+Thumbs.db
+.DS_Store
