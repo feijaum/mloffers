@@ -56,7 +56,7 @@ export async function videoApi(request,env,url) {
   if(typeof prompt!=="string"||prompt.length<30||prompt.length>3800)return resp({error:"Prompt precisa ter de 30 a 3800 caracteres"},400);
   if(body?.confirmCost!==true)return resp({error:"Confirme o consumo de créditos antes de gerar"},400);
   const today=new Date().toISOString().slice(0,10);
-  const n=await env.DB.prepare("SELECT COUNT(*) AS count FROM video_jobs WHERE created_at>=?1").bind(today+"T00:00:00").first();
+  const n=await env.DB.prepare("SELECT COUNT(*) AS count FROM video_jobs WHERE created_at>=?1 AND status IN ('requesting','processing','ready')").bind(today+"T00:00:00").first();
   if((n?.count||0)>=3)return resp({error:"Limite de 3 solicitações por dia atingido"},429);
   const id=jobId();
   await env.DB.prepare("INSERT INTO video_jobs (id,model,prompt,status,created_at) VALUES (?1,?2,?3,'requesting',?4)").bind(id,model,prompt,new Date().toISOString()).run();
