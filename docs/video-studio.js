@@ -26,18 +26,35 @@ function renderRankingCards(){
  box.querySelectorAll("[data-video-offer]").forEach(b=>b.onclick=()=>{v("video-product").value=b.dataset.videoOffer;renderSelection()});
 }
 function promptFor(x){return [
-"Crie um vídeo publicitário vertical 9:16 de aproximadamente 8 segundos para Reels, em português brasileiro.",
-"Produto real: "+x.title+".",
-"Preserve rigorosamente o design, marca, cor e proporções do produto. Não crie funções ou acessórios não confirmados.",
-"Câmera cinematográfica: close do produto, transição suave para contexto de uso fiel ao produto e encerramento com destaque visual.",
-"Áudio natural e trilha discreta. Locução curta: 'Olha esse achadinho! Gostou? Comente EU QUERO para receber o link!'",
-"Deixe espaço visual para adicionar a chamada 'EU QUERO' na edição. Evite texto gerado incorretamente.",
-"Sem preços fixos ou promessas de desconto, pois ofertas variam. Não inclua 'link na bio'.",
-"Sem inventar benefícios, depoimentos, garantias ou pessoas endossando o produto.",
-"Estética profissional e autêntica, otimizada para celular."
+"Crie vídeo publicitário vertical 9:16 com aproximadamente oito segundos, visual cinematográfico, realista, adequado para Reels.",
+"Produto: "+x.title+". Categoria: "+(x.category||"achadinhos")+".",
+"Respeite estritamente o produto real da imagem de referência, cores, proporções, materiais, rótulos e marcas existentes. Não invente recursos nem acessórios.",
+"Cenas: abertura com close do produto; detalhes de acabamento; contexto de uso plausível; encerramento com produto em destaque.",
+"REGRA OBRIGATÓRIA: NÃO CRIE NENHUM TEXTO SOBREPOSTO NO VÍDEO.",
+"Sem títulos, palavras, letras, números, preços, promoções, legendas, subtítulos, selos, hashtags, banners, botões, interfaces de aplicativo, chamadas escritas ou marcas d'água.",
+"Não alterar inscrições físicas que existam originalmente no produto.",
+"Deixe espaço livre no topo e no rodapé para edição posterior. Centralize o produto nas áreas seguras.",
+"Não escreva EU QUERO no vídeo; essa chamada será adicionada no editor posteriormente.",
+"Áudio ambiente e música discretos. Se houver locução, português brasileiro sem subtítulos automáticos.",
+"Não alegue descontos, benefícios ou garantias não confirmados. Sem texto promocional gerado por IA."
 ].join("\n")}
-function renderSelection(){selected=(ranking.length?ranking:offers).find(x=>x.id===v("video-product").value)||null;renderRankingCards();const box=v("video-product-preview");if(!selected){box.textContent="Selecione uma oferta para criar o vídeo.";v("video-prompt").value="";return}
-box.innerHTML=(selected.image?'<img src="'+safe(selected.image)+'" alt="Imagem do produto" loading="lazy">':"")+'<strong>'+safe(selected.title)+'</strong><small>Preço na captura: R$ '+Number(selected.price).toFixed(2).replace(".",",")+'</small>';v("video-prompt").value=promptFor(selected)}
+function overlayCategory(x){const t=((x.category||"")+" "+(x.title||"")).toLowerCase();if(/furadeira|parafusadeira|serra|lixadeira|ferrament|broca/.test(t))return "ferramentas";if(/fone|smartwatch|celular|notebook|gamer|mouse|teclado|bluetooth|tecnologia|eletr[oô]nic/.test(t))return "tecnologia";if(/cozinha|panela|air fryer|casa|organizador|limpeza|banheiro|aspirador/.test(t))return "casa";if(/perfume|maquiagem|skincare|beleza|moda|t[eê]nis|vestido|bolsa/.test(t))return "beleza";return "geral"}
+function buildOverlayCopy(x){
+ const type=overlayCategory(x);
+ const titles={ferramentas:"Achado útil",tecnologia:"Achadinho tech",casa:"Utilidade do dia",beleza:"Achadinho de hoje",geral:"Achadinho do dia"};
+ const support={ferramentas:"Confira os detalhes",tecnologia:"Tecnologia para conferir",casa:"Ideia útil para casa",beleza:"Vale conhecer",geral:"Vale conferir"};
+ const tags={ferramentas:"#ferramentas",tecnologia:"#tecnologia",casa:"#utilidadesdomesticas",beleza:"#beleza",geral:"#achados"};
+ const subtitle=String(x.title||"Produto em destaque").replace(/\s+/g," ").trim();
+ const short=subtitle.length>55?subtitle.slice(0,52).replace(/\s+\S*$/,"").trim()+"…":subtitle;
+ const caption=["✨ "+titles[type]+"!","",x.title,"","💬 Gostou? Comente EU QUERO para receber o link por mensagem!","",x.affiliate?"🔗 Link: "+x.affiliate:"🔗 Consulte a oferta: "+(x.url||"link disponível por mensagem"),"","Publicidade / link de afiliado. Preço, frete e disponibilidade podem mudar."].join("\n");
+ return {title:titles[type],subtitle:short,cta:"Comente EU QUERO",support:support[type],caption,hashtags:"#achadinhos #ofertas #mercadolivre "+tags[type]};
+}
+const overlayIds=["title","subtitle","cta","support","caption","hashtags"];
+function renderOverlayCopy(x){const data=x?buildOverlayCopy(x):{};for(const key of overlayIds){const field=v("overlay-"+key);if(field)field.value=data[key]||""}updateOverlayPreview()}
+function updateOverlayPreview(){for(const key of ["title","subtitle","cta"]){const e=v("overlay-preview-"+key);if(e)e.textContent=v("overlay-"+key)?.value||""}}
+function overlayPackage(){return overlayIds.map(k=>k.toUpperCase()+"\n"+(v("overlay-"+k)?.value||"")).join("\n\n")}
+function renderSelection(){selected=(ranking.length?ranking:offers).find(x=>x.id===v("video-product").value)||null;renderRankingCards();const box=v("video-product-preview");if(!selected){box.textContent="Selecione uma oferta para criar o vídeo.";v("video-prompt").value="";renderOverlayCopy(null);return}
+box.innerHTML=(selected.image?'<img src="'+safe(selected.image)+'" alt="Imagem do produto" loading="lazy">':"")+'<strong>'+safe(selected.title)+'</strong><small>Preço na captura: R$ '+Number(selected.price).toFixed(2).replace(".",",")+'</small>';v("video-prompt").value=promptFor(selected);renderOverlayCopy(selected)}
 async function refreshJobs(){if(!authenticated)return;try{const {jobs}=await call("jobs");const box=v("video-jobs");box.innerHTML=jobs.length?jobs.map(j=>'<article class="video-job"><div><b>'+safe("Gemini Omni 1.1 Flash")+'</b><p>'+safe(new Date(j.created_at).toLocaleString("pt-BR"))+' · '+safe(j.status)+'</p></div><div class="hero-buttons">'+(j.status==="processing"?'<button class="btn secondary small" data-check="'+safe(j.id)+'">Verificar status</button>':"")+(j.status==="ready"?'<button class="btn primary small" data-download="'+safe(j.id)+'">Baixar MP4</button>':"")+'</div></article>').join(""):'<p class="fine">Nenhum vídeo gerado ainda.</p>';box.querySelectorAll("[data-check]").forEach(b=>b.onclick=()=>check(b.dataset.check));box.querySelectorAll("[data-download]").forEach(b=>b.onclick=()=>{window.location.href="/api/video/download/"+b.dataset.download})}catch(e){status(e.message)}}
 async function check(id){try{const r=await call("jobs/"+id);status(r.status==="ready"?"Vídeo pronto! Use Baixar MP4.":r.status==="failed"?"Falha na geração: "+r.error:"Google ainda está processando o vídeo.");await refreshJobs()}catch(e){status(e.message)}}
 async function connect(){try{const state=await call("auth");auth(state.authenticated);status(state.configured?"Estúdio disponível.":"Configuração pendente: adicione VIDEO_ACCESS_PASSWORD e VIDEO_SESSION_SECRET como Secrets no Cloudflare.");if(state.authenticated)await refreshJobs()}catch(e){auth(false);status(e.message)}}
@@ -97,8 +114,18 @@ v("video-flow-kit").onclick=()=>{
   "=== PROMPT PARA GOOGLE FLOW ===",
   v("video-prompt").value,
   "",
+  "=== TEXTOS DE OVERLAY E CAPA ===",overlayPackage(),"",
   "NOTA: O pacote não gera o vídeo. Cole o prompt e anexe a imagem no Google Flow."
  ].join("\n"));
  status("Pacote do produto baixado.");
 };
 mode("flow");
+
+for(const key of overlayIds)v("overlay-"+key)?.addEventListener("input",updateOverlayPreview);
+document.querySelectorAll("[data-copy-overlay]").forEach(button=>button.addEventListener("click",async()=>{
+ const key=button.dataset.copyOverlay;
+ const value=key==="all"?overlayPackage():v("overlay-"+key)?.value||"";
+ if(!value.trim()){status("Selecione um produto primeiro.");return}
+ try{await navigator.clipboard.writeText(value);status("Texto copiado com sucesso.")}catch{status("Falha ao copiar texto automaticamente.")}
+}));
+v("overlay-download").onclick=()=>{if(!selected){status("Selecione um produto.");return}downloadText("overlay-"+selected.id+".txt",overlayPackage());status("Overlays baixados.")};
