@@ -1,6 +1,6 @@
 /* Observatório ML PWA: cache apenas dos recursos da aplicação.
    Capturas compartilhadas pelo usuário são armazenadas TEMPORARIAMENTE no navegador. */
-const CACHE='observatorio-ml-pages-v4';
+const CACHE='observatorio-ml-pages-v5';
 const SHARES='observatorio-ml-shares-v1';
 const ASSETS=['./','./index.html','./style.css','./app.js','./video-studio.js','./icon.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>
