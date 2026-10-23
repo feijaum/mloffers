@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "mloffers-instagram-dm-copy",
+  "compatibility_date": "2026-09-11",
+  "main": "./worker/index.ts",
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "instagram_comment_dm",
+      "database_id": "REPLACE_WITH_NEW_D1_ID",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
