@@ -14,5 +14,29 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "./shared",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/html",
+            ".html",
+            ".htm",
+            "text/csv",
+            ".csv",
+            "application/json",
+            ".json"
+          ]
+        }
+      ]
+    }
+  }
 }
