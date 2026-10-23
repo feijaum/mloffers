@@ -47,11 +47,15 @@
 <section class="panel"><div class="panel-head"><div><div class="eyebrow">ESTÚDIO DE VÍDEOS · GOOGLE VEO</div><h2>Geração automática de Reels</h2><p>Escolha uma oferta, revise o prompt e gere um vídeo vertical com Veo 3.1 Fast ou Qualidade. A chave da API fica protegida no Cloudflare.</p></div><span class="mini-badge">Até 3 gerações por dia</span></div>
 <div class="studio-guide">
 <div class="studio-grid">
-<div><label class="field"><span>Produto selecionado</span><select id="video-product"><option value="">Selecione um produto importado</option></select></label>
+<div><label class="field"><span>Produto selecionado</span><select id="video-product"><option value="">Selecione no ranking abaixo</option></select></label>
 <label class="field"><span>Modelo de vídeo</span><select id="video-model"><option value="fast">Veo 3.1 Fast — mais econômico</option><option value="quality">Veo 3.1 — maior qualidade</option></select></label>
 <p class="fine">Duração aproximada de 8 s, proporção 9:16, 720p. Os preços da API variam e podem ser cobrados pelo Google. Verifique faturamento e disponibilidade do modelo antes de gerar.</p></div>
 <div><label class="field"><span>Prévia da oferta</span><div id="video-product-preview" class="video-product-preview">Importe ofertas na aba Ofertas para começar.</div></label></div>
 </div>
+<section class="video-rank-panel" aria-label="Ofertas mais bem classificadas">
+<div class="video-rank-header"><div><strong>Ranking de produtos para vídeos</strong><p class="fine">Mesmas posições, notas e ordenação da aba Ofertas. Escolha diretamente um produto para gerar seu Reel.</p></div><button class="btn secondary small" type="button" data-goto="ofertas" id="video-open-ranking">Ver ranking completo →</button></div>
+<div class="video-rank-cards" id="video-rank-cards"><p class="fine">Importe suas ofertas para visualizar o ranking.</p></div>
+</section>
 <label class="field"><span>Prompt editável para o vídeo</span><textarea id="video-prompt" rows="10" placeholder="Selecione uma oferta para montar o roteiro."></textarea></label>
 <p class="fine">A imagem da oferta será enviada ao Veo como quadro inicial quando estiver disponível em formato compatível. O modelo pode não reproduzir a imagem com fidelidade total; revise antes de publicar.</p>
 <label class="field"><span><input id="video-use-image" type="checkbox" checked> Usar a imagem original do produto como quadro inicial do vídeo (quando disponível)</span></label>
