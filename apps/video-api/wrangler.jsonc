@@ -1,0 +1,9 @@
+{
+  "name": "mloffers-video-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "vars": {
+    "ALLOWED_ORIGIN": "https://observatorio-ml.jvleite7.workers.dev",
+    "VEO_MODEL": "veo-3.1-generate-preview"
+  }
+}
