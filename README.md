@@ -1,39 +1,152 @@
-# ML Offers — Observatório de Ofertas & Conteúdo
+<div align="center">
 
-Projeto unificado de inteligência de ofertas do Mercado Livre, criação de roteiros para Veo/Google Flow e preparação de campanhas Instagram com CTA **«Comente EU QUERO»**.
+# Observatório ML
 
-## Acesso web (GitHub Pages)
+**Da descoberta de ofertas à criação de conteúdo para afiliados.**
 
-Depois de ativar **Settings → Pages → Deploy from a branch → main → /docs**, o frontend público ficará em:
+Uma ferramenta independente para organizar ofertas do Mercado Livre, identificar produtos com potencial de divulgação e preparar conteúdos para Instagram, Reels, TikTok e Google Flow.
 
-https://feijaum.github.io/mloffers/
+**[Acessar plataforma web](https://feijaum.github.io/mloffers/)** · **[Instalar extensão Chrome](extension-chrome/README.md)** · **[Automação de comentários e DM](apps/instagram-comment-dm/)**
 
-A aplicação em `docs/` é **estática e compatível com celular**: importa arquivos HTML de ofertas que você já possui, calcula ranking local, prepara prompt Veo, legenda, CTA e modelo de DM; exporta o pacote. Os dados importados ficam no **navegador deste dispositivo**. Para compartilhar uma seleção entre PC e celular sem expor o banco, publique o feed **docs/data/ofertas.json** com **tools/gerar_feed.py** e use o botão **Carregar seleção publicada no GitHub**.
+[![Validação do projeto](https://github.com/feijaum/mloffers/actions/workflows/validate-web.yml/badge.svg)](https://github.com/feijaum/mloffers/actions/workflows/validate-web.yml)
 
-**Limitação essencial:** GitHub Pages não executa Python, extensões Chrome, Cloudflare Workers ou consultas autenticadas ao Mercado Livre. A página pública **não varre as 20 páginas de ofertas ao vivo**. Captura automática depende de acesso autorizado e de um backend separado.
+</div>
 
-## Exportar ofertas no Chrome
+---
 
-A [extensão de desktop](extension-chrome/) foi adicionada ao repositório. Ela consulta, sob comando explícito, até 20 páginas das seções públicas de ofertas (sem contornar bloqueios), registra anúncios em armazenamento local e exporta arquivos **JSON/CSV**. Os arquivos são importados na interface web.
+## O que é o Observatório ML?
 
-O **Chrome de celular não executa extensões de desktop**. No Android, instale o Observatório como PWA e importe os arquivos, ou compartilhe HTML/CSV/JSON pelo menu Compartilhar quando suportado. No iPhone, use o seletor de arquivos no portal. Consulte [o manual da extensão](extension-chrome/README.md).
+O **Observatório ML** reúne a análise de produtos em oferta e a preparação de campanhas para redes sociais em um fluxo simples: **capturar → comparar → selecionar → criar → divulgar**.
 
-## Monorepo
+Em vez de escolher produtos apenas pelo percentual de desconto, a ferramenta organiza dados comerciais das ofertas e apresenta um **ranking de oportunidades**, acompanhado de imagens, sugestões de conteúdo e materiais prontos para edição.
 
-- `docs/`: dashboard estático/mobile para GitHub Pages (frontend principal), com importação de arquivos por compartilhamento PWA quando suportada.\n- `extension-chrome/`: extensão MV3 de exportação de consultas em Chrome desktop (sem depender do Python).
-- `apps/instagram-comment-dm/`: cópia do aplicativo de automação Instagram/DM. As migrações legadas 0004, 0005, 0006 e 0008 com credenciais/identificadores fixos foram neutralizadas e a configuração do Worker foi isolada para não replicar dados de acesso no novo repositório público. O repositório de origem não foi modificado.
-- `desktop/`: documentação e estado da migração do Observatório local com extensão Chrome e histórico SQLite (o código desktop legado ainda não foi incorporado integralmente).\n- `tools/gerar_feed.py`: prepara um feed JSON público a partir de CSV sem tokens nem sessões.\n- `tests/web-smoke.cjs`: testes de parser, ranking, prompt Veo, legenda e DM.
+O projeto foi pensado para quem trabalha com **marketing de afiliados**, produção de vídeos curtos e curadoria de achadinhos.
 
-## Regra de publicação
+## Funcionalidades
 
-O Observatório não cria nem dispara DMs por si só. O fluxo de comentário/DM depende da aplicação Instagram já operada separadamente. No pacote gerado, associe **publicação ↔ produto ↔ link afiliado ↔ palavra-chave `eu quero`** antes de publicar.
+| Recurso | O que oferece |
+| --- | --- |
+| **Captura de ofertas** | Extensão Chrome para consultar, sob comando do usuário, as seções de ofertas disponíveis, com até 20 páginas por seção. |
+| **Organização de produtos** | Consolidação por ID do anúncio, reunindo título, vendedor, imagem, preço, desconto anunciado, avaliação, vendas informadas e URL. |
+| **Ranking inteligente** | Notas de prioridade, sinais de conversão e potencial de conteúdo com base nos dados presentes nas capturas. |
+| **Painel web responsivo** | Consulta ao ranking pelo computador ou celular, com busca, filtros e armazenamento local dos produtos importados. |
+| **Conteúdo para Veo** | Prompts prontos para produzir vídeos promocionais no **Google Flow**, com instruções para selecionar um modelo **Veo**. |
+| **Publicações para Instagram** | Legendas, chamadas para ação com **“Comente EU QUERO”**, campos para link de afiliado e modelos de mensagem direta. |
+| **Importação e exportação** | Arquivos **HTML, CSV e JSON**, backup local e possibilidade de publicar uma seleção no GitHub para acesso em outros dispositivos. |
 
-O link de afiliado deve ser gerado pelos canais oficiais. Links na legenda do Instagram nem sempre são clicáveis. A DM por comentário pode oferecer uma opção prática, desde que configurada segundo as regras da Meta.
+> **Importante:** o ranking apresenta **estimativas editoriais**, e não probabilidades comprovadas de venda. Os preços são referentes às capturas; confirme preço, estoque, frete, cupom e disponibilidade antes de divulgar.
 
-## Segurança
+## Como funciona
 
-Não inclua em commits arquivos `.env`, tokens OAuth, dados de sessão, SQLite com informações privadas nem exports de clientes. Evite copiar secrets do Cloudflare e da Meta. O conteúdo e as imagens dos produtos devem ser usados de acordo com as permissões aplicáveis.
+### 1. Capture as ofertas no computador
 
-## Estado da implantação
+Use a [extensão para Chrome desktop](extension-chrome/README.md) e escolha quais seções deseja consultar:
 
-O deploy em GitHub Pages requer que o proprietário habilite Pages nas configurações do repositório. Não declarar o site como publicado sem verificar a URL.
+- Todas as ofertas;
+- Ofertas relâmpago;
+- Preços imbatíveis;
+- Ofertas de até R$ 100.
+
+A consulta é iniciada **somente quando você clica**, com seleção de **1, 5, 10 ou 20 páginas por seção**. Os anúncios identificados são consolidados e podem ser exportados em **JSON** ou **CSV**.
+
+### 2. Analise as oportunidades no painel web
+
+Abra **[feijaum.github.io/mloffers](https://feijaum.github.io/mloffers/)** e importe o arquivo gerado pela extensão.
+
+O painel permite pesquisar e ordenar produtos por:
+
+- prioridade geral;
+- sinais de conversão;
+- potencial para vídeos;
+- desconto anunciado;
+- menor preço registrado.
+
+### 3. Prepare o material de divulgação
+
+Em **Montar publicação**, cada produto pode reunir:
+
+- imagem e link público do anúncio;
+- prompt orientado ao **Veo no Google Flow**;
+- legenda para Instagram com o link da oferta na própria publicação;
+- chamada para comentar **“EU QUERO”**;
+- modelo de mensagem para responder ao comentário por DM;
+- campo para inserir o **link de afiliado** gerado pelos canais oficiais.
+
+O Observatório prepara os materiais; a geração do vídeo ocorre no Google Flow e a publicação continua sob seu controle.
+
+### 4. Conecte à sua estratégia de comentários e DM
+
+O repositório também contém uma **cópia do código** do projeto [Instagram Comment DM](apps/instagram-comment-dm/), destinado à automação de respostas por mensagem a partir dos comentários.
+
+Para evitar enviar o produto errado, cada campanha deve relacionar **publicação → produto → link de afiliado → palavra-chave “eu quero”**. O envio de DMs é executado pela aplicação de Instagram configurada separadamente, **não pelo GitHub Pages**.
+
+## Comece a usar
+
+### Plataforma web
+
+**[Abrir Observatório ML](https://feijaum.github.io/mloffers/)**
+
+O painel pode ser acessado diretamente no navegador, inclusive no celular. É possível importar capturas locais e, quando houver um feed publicado, usar a opção **Carregar seleção publicada no GitHub**.
+
+### Extensão para Chrome desktop
+
+1. Baixe o projeto em **Code → Download ZIP** no GitHub.
+2. Extraia o arquivo no computador.
+3. Acesse \`chrome://extensions\` e ative o **Modo do desenvolvedor**.
+4. Clique em **Carregar sem compactação** e selecione a pasta \`extension-chrome\`.
+5. Abra a extensão, selecione as seções e clique em **Consultar ofertas**.
+6. Exporte o **JSON** e importe-o no painel web.
+
+**[Ver guia completo da extensão](extension-chrome/README.md)**
+
+### Uso no celular
+
+O painel funciona como aplicativo web instalável (**PWA**) em navegadores compatíveis. Você pode importar arquivos HTML, CSV ou JSON pelo próprio site e, em determinados aparelhos Android, compartilhá-los com o PWA instalado.
+
+O **Chrome móvel não instala esta extensão de desktop**. A captura de páginas pela extensão é voltada ao Chrome de computador; no celular, a plataforma **analisa capturas e gera conteúdo**, mas não faz a varredura das ofertas ao vivo.
+
+## Estrutura do projeto
+
+\`\`\`text
+mloffers/
+├── docs/                     # Aplicação web, ranking, kits de conteúdo e PWA
+├── extension-chrome/         # Captura sob demanda e exportação JSON/CSV
+├── apps/
+│   └── instagram-comment-dm/ # Cópia do projeto de comentários e mensagens
+├── tools/
+│   └── gerar_feed.py         # Preparação de seleção pública para o painel
+├── tests/                    # Testes de extração e criação de conteúdo
+└── .github/workflows/        # Validação automatizada
+\`\`\`
+
+**Tecnologias:** JavaScript, HTML, CSS, IndexedDB, Progressive Web App, extensão Chrome Manifest V3 e GitHub Pages. O módulo de mensagens utiliza React, TypeScript e Cloudflare Workers/D1 em uma implantação independente.
+
+## Privacidade e limitações
+
+- **Dados locais:** as capturas importadas no painel são processadas no navegador e armazenadas no dispositivo. Não há sincronização automática entre computador e celular.
+- **Publicação de seleções:** o feed em \`docs/data/ofertas.json\`, caso seja atualizado, é público no GitHub. Não inclua credenciais, cookies, informações pessoais ou dados de sessão.
+- **Acesso às ofertas:** a extensão não é uma API oficial do Mercado Livre, não contorna CAPTCHA ou bloqueios e não garante acesso a todas as páginas. Use-a apenas quando a coleta for permitida.
+- **Ofertas e desempenho:** preço riscado não comprova queda histórica, e a pontuação do ranking não é uma taxa medida de conversão, alcance ou comissão.
+- **Instagram e Veo:** o Observatório não publica posts, não envia DMs por conta própria e não seleciona automaticamente o modelo de geração no Google Flow. Essas ações dependem das ferramentas e configurações correspondentes.
+- **Links nas legendas:** o link pode constar no texto da publicação, mas sua apresentação como link clicável depende dos recursos disponibilizados pelo Instagram.
+
+## Desenvolvimento e documentação
+
+O projeto inclui validações automatizadas para a interface web e os extratores da extensão. O código é mantido no GitHub e pode ser inspecionado e adaptado conforme as permissões aplicáveis.
+
+- [Documentação da plataforma web](docs/README.md)
+- [Instalação e uso da extensão](extension-chrome/README.md)
+- [Integração com comentários e DM](apps/instagram-comment-dm/INTEGRACAO-MLOFFERS.md)
+- [Publicação de uma seleção de ofertas no GitHub](docs/data/README.md)
+
+---
+
+<div align="center">
+
+**Observatório ML** · Curadoria de ofertas, análise de oportunidades e produção de conteúdo em um só fluxo.
+
+[**Acessar a ferramenta →**](https://feijaum.github.io/mloffers/)
+
+<sub>Projeto independente, não afiliado oficialmente ao Mercado Livre, à Meta ou ao Google.</sub>
+
+</div>
