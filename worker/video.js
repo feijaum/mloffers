@@ -49,7 +49,6 @@ export async function videoApi(request,env,url) {
   if((n?.count||0)>=3)return resp({error:"Limite de 3 solicitações por dia atingido"},429);
   const id=jobId();
   await env.DB.prepare("INSERT INTO video_jobs (id,model,prompt,status,created_at) VALUES (?1,?2,?3,'requesting',?4)").bind(id,model,prompt,new Date().toISOString()).run();
-  // A imagem do produto permanece referência manual até existir pipeline de upload com controle de tamanho.
   const instance={prompt};
   if(body.imageUrl){
    try{
