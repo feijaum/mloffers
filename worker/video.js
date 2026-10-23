@@ -1,4 +1,4 @@
-// Video gateway: sessão assinada HttpOnly, cotas D1 e operações Veo.
+// Video gateway: sessão HttpOnly, cotas D1 e Gemini Omni Interactions API.
 const api="https://generativelanguage.googleapis.com/v1beta/";
 const enc=new TextEncoder();
 const resp=(value,status=200,headers={})=>new Response(JSON.stringify(value),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff",...headers}});
@@ -10,7 +10,18 @@ function sameOrigin(request){const origin=request.headers.get("origin");const ex
 async function session(request,env){if(!env.VIDEO_SESSION_SECRET)return false;const cookie=parseCookie(request),parts=cookie.split(".");if(parts.length!==2||!/^[0-9]{10,13}$/.test(parts[0]))return false;const expiry=Number(parts[0]);if(expiry<Date.now()||expiry>Date.now()+86400000)return false;return equals(await sign(parts[0],env.VIDEO_SESSION_SECRET),parts[1])}
 function cookie(value,maxAge){return "video_session="+value+"; HttpOnly; Secure; SameSite=Strict; Path=/api/video; Max-Age="+maxAge}
 async function googleFetch(path,env,options){const r=await fetch(api+path,{...options,headers:{"x-goog-api-key":env.GOOGLE_API_KEY,...options?.headers}});const data=await r.json().catch(()=>({error:{message:"Resposta inválida do provedor"}}));return {status:r.status,data}}
-const findUri=obj=>obj?.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri||obj?.response?.generatedVideos?.[0]?.video?.uri||"";
+const findVideo=obj=>{
+  const content=obj?.steps?.filter(step=>step?.type==="model_output").flatMap(step=>step.content||[])||[];
+  return content.find(part=>part?.type==="video"&&typeof part.uri==="string")
+    ||(typeof obj?.output_video?.uri==="string"?obj.output_video:null);
+};
+function fileIdFromUri(uri){
+  try{const url=new URL(uri);
+    if(url.protocol!=="https:"||url.hostname!=="generativelanguage.googleapis.com")return "";
+    const match=url.pathname.match(/^\/v1beta\/files\/([a-zA-Z0-9_-]+):download$/);
+    return match?match[1]:"";
+  }catch{return ""}
+}
 const jobId=()=>crypto.randomUUID();
 export async function videoApi(request,env,url) {
  if(!env.DB)return resp({error:"Banco D1 não configurado"},503);
@@ -41,7 +52,7 @@ export async function videoApi(request,env,url) {
  if(!env.GOOGLE_API_KEY)return resp({error:"GOOGLE_API_KEY não configurada"},503);
  if(path==="/api/video/generate"&&method==="POST"){
   let body;try{body=await request.json()}catch{return resp({error:"JSON inválido"},400)}
-  const prompt=body?.prompt,model=body?.model==="quality"?"veo-3.1-generate-preview":"veo-3.1-fast-generate-preview";
+  const prompt=body?.prompt,model="gemini-omni-1.1-flash";
   if(typeof prompt!=="string"||prompt.length<30||prompt.length>3800)return resp({error:"Prompt precisa ter de 30 a 3800 caracteres"},400);
   if(body?.confirmCost!==true)return resp({error:"Confirme o consumo de créditos antes de gerar"},400);
   const today=new Date().toISOString().slice(0,10);
@@ -49,7 +60,7 @@ export async function videoApi(request,env,url) {
   if((n?.count||0)>=3)return resp({error:"Limite de 3 solicitações por dia atingido"},429);
   const id=jobId();
   await env.DB.prepare("INSERT INTO video_jobs (id,model,prompt,status,created_at) VALUES (?1,?2,?3,'requesting',?4)").bind(id,model,prompt,new Date().toISOString()).run();
-  const instance={prompt};
+  const inputs=[{type:"text",text:prompt}];
   if(body.imageUrl){
    try{
     const imageUrl=new URL(body.imageUrl);
@@ -63,20 +74,43 @@ export async function videoApi(request,env,url) {
     const bytes=new Uint8Array(await response.arrayBuffer());
     if(bytes.length>4*1024*1024)throw Error("Imagem acima de 4 MB");
     let encoded="";for(let i=0;i<bytes.length;i+=0x4000)encoded+=String.fromCharCode(...bytes.subarray(i,i+0x4000));
-    instance.image={inlineData:{mimeType:mime,data:btoa(encoded)}};
+    inputs.unshift({type:"image",mime_type:mime,data:btoa(encoded)});
    }catch(error){
     await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(String(error.message||error).slice(0,300),id).run();
     return resp({error:"Não foi possível preparar a imagem do produto",details:String(error.message||error)},400);
    }
   }
+  const payload={
+    model,
+    input:inputs,
+    response_format:{type:"video",aspect_ratio:"9:16",delivery:"uri"}
+  };
   let result;
-  try{result=await googleFetch("models/"+model+":predictLongRunning",env,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({instances:[instance],parameters:{aspectRatio:"9:16",numberOfVideos:1,resolution:"720p"}})})}
-  catch(error){await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(String(error.message||error).slice(0,300),id).run();return resp({error:"Falha na comunicação com Google"},502)}
-  if(result.status>=400||!result.data?.name){
-   await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(JSON.stringify(result.data?.error||result.data).slice(0,800),id).run();
-   return resp({error:"Google não iniciou o vídeo",details:result.data?.error?.message||"Confira sua conta, modelo e faturamento."},result.status>=400&&result.status<500?result.status:502);
+  try{
+    result=await googleFetch("interactions",env,{
+      method:"POST",
+      headers:{"content-type":"application/json"},
+      body:JSON.stringify(payload)
+    });
+  }catch(error){
+    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(String(error.message||error).slice(0,300),id).run();
+    return resp({error:"Falha na comunicação com Google"},502);
   }
-  await env.DB.prepare("UPDATE video_jobs SET status='processing',operation=?1 WHERE id=?2").bind(result.data.name,id).run();
+  if(result.status>=400){
+    const reason=JSON.stringify(result.data?.error||result.data).slice(0,800);
+    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(reason,id).run();
+    return resp({error:"Google não iniciou o vídeo",details:result.data?.error?.message||"Confira acesso, modelo e faturamento."},result.status<500?result.status:502);
+  }
+  const video=findVideo(result.data);
+  const uri=video?.uri||"";
+  const fileId=fileIdFromUri(uri);
+  if(!fileId){
+    const reason="Omni não retornou URI de vídeo. Verifique a resposta da Interactions API.";
+    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(reason,id).run();
+    return resp({error:reason,details:"O formato de resposta precisa conter steps[].content[].uri (delivery=uri)."},502);
+  }
+  await env.DB.prepare("UPDATE video_jobs SET status='processing',operation=?1,video_uri=?2 WHERE id=?3")
+    .bind("files/"+fileId,uri,id).run();
   return resp({id,status:"processing",model},202);
  }
  if(path==="/api/video/jobs"&&method==="GET"){
@@ -88,20 +122,18 @@ export async function videoApi(request,env,url) {
   const job=await env.DB.prepare("SELECT id,status,operation,model,error FROM video_jobs WHERE id=?1").bind(statusMatch[1]).first();
   if(!job)return resp({error:"Vídeo não encontrado"},404);
   if(job.status!=="processing")return resp({id:job.id,status:job.status,error:job.error||null,ready:job.status==="ready"});
-  if(!/^models\/[a-zA-Z0-9._-]+\/operations\/[a-zA-Z0-9._-]+$/.test(job.operation||"")&&!/^operations\/[a-zA-Z0-9._-]+$/.test(job.operation||""))return resp({error:"Operação inesperada do Google"},502);
+  if(!/^files\/[a-zA-Z0-9_-]+$/.test(job.operation||""))return resp({error:"Identificador de arquivo inesperado"},502);
   const result=await googleFetch(job.operation,env);
-  if(result.status>=400)return resp({error:result.data?.error?.message||"Erro ao consultar geração"},502);
-  if(result.data?.done){
-   const uri=findUri(result.data);
-   if(result.data?.error||!uri){
-    const message=JSON.stringify(result.data?.error||{message:"Nenhum vídeo retornado"}).slice(0,800);
-    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(message,job.id).run();
-    return resp({id:job.id,status:"failed",error:message});
-   }
-   const videoUrl=new URL(uri);
-   if(videoUrl.protocol!=="https:"||!["generativelanguage.googleapis.com","api.google.dev"].includes(videoUrl.hostname))return resp({error:"URL inesperada do vídeo"},502);
-   await env.DB.prepare("UPDATE video_jobs SET status='ready',video_uri=?1 WHERE id=?2").bind(uri,job.id).run();
-   return resp({id:job.id,status:"ready",ready:true});
+  if(result.status>=400)return resp({error:result.data?.error?.message||"Erro ao consultar arquivo no Google"},502);
+  const state=result.data?.state;
+  if(state==="ACTIVE"){
+    await env.DB.prepare("UPDATE video_jobs SET status='ready' WHERE id=?1").bind(job.id).run();
+    return resp({id:job.id,status:"ready",ready:true});
+  }
+  if(state==="FAILED"){
+    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2")
+      .bind("Google reportou falha no processamento do arquivo de vídeo.",job.id).run();
+    return resp({id:job.id,status:"failed"});
   }
   return resp({id:job.id,status:"processing",ready:false});
  }
@@ -110,7 +142,7 @@ export async function videoApi(request,env,url) {
   const job=await env.DB.prepare("SELECT status,video_uri FROM video_jobs WHERE id=?1").bind(downloadMatch[1]).first();
   if(job?.status!=="ready"||!job.video_uri)return resp({error:"Vídeo ainda não está disponível"},404);
   const uri=new URL(job.video_uri);
-  if(uri.protocol!=="https:"||uri.hostname!=="generativelanguage.googleapis.com")return resp({error:"Destino de vídeo inválido"},502);
+  if(!fileIdFromUri(job.video_uri))return resp({error:"Destino de vídeo inválido"},502);
   const video=await fetch(uri.toString(),{headers:{"x-goog-api-key":env.GOOGLE_API_KEY},redirect:"follow"});
   if(!video.ok)return resp({error:"Google não disponibilizou o arquivo; ele pode ter expirado"},502);
   return new Response(video.body,{status:200,headers:{"content-type":"video/mp4","content-disposition":'attachment; filename="observatorio-'+downloadMatch[1]+'.mp4"',"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
