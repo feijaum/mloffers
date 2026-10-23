@@ -1,0 +1,35 @@
+name: Validar portal web
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/validate-web.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe JavaScript
+        run: |
+          node --check docs/app.js
+          node --check docs/service-worker.js
+      - name: Verificar arquivos indispensáveis
+        run: |
+          test -s docs/index.html
+          test -s docs/style.css
+          test -s docs/manifest.webmanifest
+          test -s docs/icon.svg
+          node -e "const fs=require('fs');const x=JSON.parse(fs.readFileSync('docs/manifest.webmanifest','utf8'));if(x.display!=='standalone')process.exit(1)"
+      - name: Verificar referências relativas para GitHub Pages
+        run: |
+          grep -q 'src="./app.js"' docs/index.html
+          grep -q 'href="./style.css"' docs/index.html
