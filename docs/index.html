@@ -44,8 +44,12 @@
 </section>
 </div>
 <div data-pane="conteudo" hidden>
-<section class="panel"><div class="panel-head"><div><div class="eyebrow">ESTÚDIO DE VÍDEOS · GEMINI OMNI</div><h2>Geração automática de Reels</h2><p>Escolha uma oferta, revise o prompt e gere um vídeo vertical com Gemini Omni 1.1 Flash. A chave da API fica protegida no Cloudflare.</p></div><span class="mini-badge">Até 3 gerações por dia</span></div>
+<section class="panel"><div class="panel-head"><div><div class="eyebrow">ESTÚDIO DE VÍDEOS · GEMINI OMNI</div><h2>Geração automática de Reels</h2><p>Escolha uma oferta, revise o prompt e use os créditos do Google Flow ou, opcionalmente, a geração por API com cobrança independente.</p></div><span class="mini-badge">Fluxo com créditos Google Flow</span></div>
 <div class="studio-guide">
+<div class="video-mode-selector"><span class="eyebrow">COMO VOCÊ QUER GERAR?</span><div class="video-mode-buttons">
+<button class="btn primary" type="button" id="video-mode-flow" aria-pressed="true">Google Flow · meus créditos</button>
+<button class="btn secondary" type="button" id="video-mode-api" aria-pressed="false">API Google · cobrança separada</button>
+</div><p id="video-mode-note" class="fine">Recomendado: prepare o kit aqui e use seus créditos existentes no Google Flow. A geração é confirmada no site do Google, sem usar a API paga do Observatório.</p></div>
 <div class="studio-grid">
 <div><label class="field"><span>Produto selecionado</span><select id="video-product"><option value="">Selecione no ranking abaixo</option></select></label>
 <label class="field"><span>Modelo de vídeo</span><select id="video-model"><option value="omni">Gemini Omni 1.1 Flash — modelo atual</option></select></label>
@@ -59,12 +63,24 @@
 <label class="field"><span>Prompt editável para o vídeo</span><textarea id="video-prompt" rows="10" placeholder="Selecione uma oferta para montar o roteiro."></textarea></label>
 <p class="fine">A imagem da oferta será enviada ao Gemini Omni como quadro inicial quando estiver disponível em formato compatível. O modelo pode não reproduzir a imagem com fidelidade total; revise antes de publicar.</p>
 <label class="field"><span><input id="video-use-image" type="checkbox" checked> Usar a imagem original do produto como quadro inicial do vídeo (quando disponível)</span></label>
+<div id="video-flow-actions" class="flow-actions">
+<div class="flow-steps"><strong>Pacote pronto para o Google Flow</strong><p class="fine">1. Selecione a oferta classificada. 2. Copie o prompt e obtenha a foto do produto. 3. Abra o Google Flow e cole o prompt, anexando a foto como referência. 4. Escolha o modelo e confirme os créditos antes de gerar.</p></div>
+<div class="hero-buttons">
+<button class="btn primary" type="button" id="video-flow-copy">Copiar prompt</button>
+<button class="btn secondary" type="button" id="video-flow-image">Abrir imagem do produto ↗</button>
+<button class="btn secondary" type="button" id="video-flow-kit">Baixar pacote do produto</button>
+<a class="btn primary" href="https://labs.google/fx/pt/tools/flow" target="_blank" rel="noopener noreferrer">Abrir Google Flow ↗</a>
+</div>
+<p class="fine">Seus créditos do Flow não podem ser consumidos pela chave da API Google. Este modo não envia nenhuma requisição paga e não automatiza cliques no Flow.</p>
+</div>
+<div id="video-api-actions" hidden>
 <div id="video-unauth"><label class="field"><span>Senha do Estúdio de Vídeos</span><input id="video-password" type="password" autocomplete="current-password" placeholder="Senha configurada no Secret do Cloudflare"></label><button type="button" class="btn secondary" id="video-login">Entrar no estúdio</button></div>
 <div id="video-auth" hidden><div class="import-tools"><span>Estúdio autenticado</span><button type="button" class="btn ghost small" id="video-logout">Sair</button></div>
 <label class="field"><span><input id="video-confirm" type="checkbox"> Confirmo que esta geração pode consumir créditos pagos da minha conta Google.</span></label>
 <div class="hero-buttons"><button type="button" class="btn primary" id="video-generate">✦ Gerar vídeo com Gemini Omni</button><button type="button" class="btn secondary" id="video-refresh">Atualizar vídeos</button></div></div>
 <p id="video-status" class="fine" role="status" aria-live="polite">Verificando disponibilidade do estúdio...</p>
 <div id="video-jobs" class="video-jobs"></div>
+</div>
 </div></section></div>
 <div data-pane="instagram" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">SUA AUTOMAÇÃO · INSTAGRAM</div><h2>Gerenciador de comentários</h2><p>Esta área será conectada exclusivamente à sua conta profissional do Instagram, usando uma instância independente da automação original.</p></div><span class="mini-badge">Configuração pendente</span></div><div class="settings-list"><div><strong>Conta conectada</strong><span id="ig-account-state">Nenhuma conta vinculada</span></div><div><strong>Worker próprio</strong><span>mloffers-instagram (a implantar)</span></div><div><strong>Banco D1 próprio</strong><span>Separado da automação original</span></div><div><strong>Respostas automáticas</strong><span>Desativadas até a conexão oficial</span></div></div><div class="studio-guide"><strong>Como ficará a automação</strong><p>Você conecta sua própria conta profissional pelo fluxo autorizado da Meta. Depois, cadastra cada publicação, associa o link de afiliado e ativa a regra “EU QUERO” para enviar a DM permitida pela API. A conta da sua esposa não será acessada.</p><p><strong>Próxima etapa:</strong> criar uma nova instância do backend copiado em <code>apps/instagram-comment-dm</code>, com D1 e Secrets próprios. Nunca reutilize o token, o banco ou o webhook da instância original.</p><button type="button" class="btn secondary" data-goto="config">Ver integrações e segurança →</button></div></section></div>
 <div data-pane="config" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">PREFERÊNCIAS E ACESSO</div><h2>Configurações</h2><p>Confira o estado do painel e as integrações planejadas.</p></div></div><div class="settings-list"><div><strong>Armazenamento de ofertas</strong><span>Local neste navegador (IndexedDB)</span></div><div><strong>Automação do Instagram</strong><span>Instância própria em preparação (sem acesso à conta original)</span></div><div><strong>Google Flow / Veo</strong><span>Backend seguro para Gemini/Veo em preparação; sem chave no navegador</span></div><div><strong>Login do painel</strong><span>Planejado — não ativado</span></div></div><div class="studio-guide"><strong>Prévia do acesso futuro</strong><p>Quando o backend de autenticação estiver pronto, este painel poderá exigir login. Por segurança, nenhum formulário de senha fictício será ativado agora.</p><button class="btn secondary" type="button" disabled>Login — em preparação</button></div></section></div>
