@@ -92,8 +92,8 @@ O painel pode ser acessado diretamente no navegador, inclusive no celular. É po
 
 1. Baixe o projeto em **Code → Download ZIP** no GitHub.
 2. Extraia o arquivo no computador.
-3. Acesse \`chrome://extensions\` e ative o **Modo do desenvolvedor**.
-4. Clique em **Carregar sem compactação** e selecione a pasta \`extension-chrome\`.
+3. Acesse `chrome://extensions` e ative o **Modo do desenvolvedor**.
+4. Clique em **Carregar sem compactação** e selecione a pasta `extension-chrome`.
 5. Abra a extensão, selecione as seções e clique em **Consultar ofertas**.
 6. Exporte o **JSON** e importe-o no painel web.
 
@@ -107,7 +107,7 @@ O **Chrome móvel não instala esta extensão de desktop**. A captura de página
 
 ## Estrutura do projeto
 
-\`\`\`text
+```text
 mloffers/
 ├── docs/                     # Aplicação web, ranking, kits de conteúdo e PWA
 ├── extension-chrome/         # Captura sob demanda e exportação JSON/CSV
@@ -117,14 +117,14 @@ mloffers/
 │   └── gerar_feed.py         # Preparação de seleção pública para o painel
 ├── tests/                    # Testes de extração e criação de conteúdo
 └── .github/workflows/        # Validação automatizada
-\`\`\`
+```
 
 **Tecnologias:** JavaScript, HTML, CSS, IndexedDB, Progressive Web App, extensão Chrome Manifest V3 e GitHub Pages. O módulo de mensagens utiliza React, TypeScript e Cloudflare Workers/D1 em uma implantação independente.
 
 ## Privacidade e limitações
 
 - **Dados locais:** as capturas importadas no painel são processadas no navegador e armazenadas no dispositivo. Não há sincronização automática entre computador e celular.
-- **Publicação de seleções:** o feed em \`docs/data/ofertas.json\`, caso seja atualizado, é público no GitHub. Não inclua credenciais, cookies, informações pessoais ou dados de sessão.
+- **Publicação de seleções:** o feed em `docs/data/ofertas.json`, caso seja atualizado, é público no GitHub. Não inclua credenciais, cookies, informações pessoais ou dados de sessão.
 - **Acesso às ofertas:** a extensão não é uma API oficial do Mercado Livre, não contorna CAPTCHA ou bloqueios e não garante acesso a todas as páginas. Use-a apenas quando a coleta for permitida.
 - **Ofertas e desempenho:** preço riscado não comprova queda histórica, e a pontuação do ranking não é uma taxa medida de conversão, alcance ou comissão.
 - **Instagram e Veo:** o Observatório não publica posts, não envia DMs por conta própria e não seleciona automaticamente o modelo de geração no Google Flow. Essas ações dependem das ferramentas e configurações correspondentes.
