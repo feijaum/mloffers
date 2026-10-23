@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Primeiro acesso — Instagram Comment DM</title>
+  <link rel="stylesheet" href="/primeiro-acesso.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="card" aria-labelledby="title">
+      <span class="eyebrow">Instagram Comment DM</span>
+      <h1 id="title">Primeiro acesso</h1>
+      <p>Cadastre com segurança a primeira senha do administrador. Esta operação só pode ser concluída uma vez.</p>
+
+      <form id="bootstrap-form" novalidate>
+        <label for="email">E-mail
+          <input id="email" name="email" type="email" autocomplete="username" maxlength="254" required>
+        </label>
+
+        <label for="password">Senha
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" maxlength="128" required>
+        </label>
+        <small class="hint">A senha deve ter pelo menos 6 caracteres. Para maior segurança, recomendamos uma senha mais longa.</small>
+
+        <label for="token">Token de primeiro acesso
+          <input id="token" name="token" type="password" autocomplete="off" minlength="32" maxlength="256" required>
+        </label>
+        <small class="hint">O token é usado apenas nesta requisição e não é salvo no navegador.</small>
+
+        <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+        <button id="submit" type="submit">Cadastrar primeira senha</button>
+      </form>
+
+      <a class="back" href="/">Voltar para o login</a>
+    </section>
+  </main>
+  <script src="/primeiro-acesso.js" defer></script>
+</body>
+</html>
