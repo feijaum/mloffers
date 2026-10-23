@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'tests/**'
+      - 'tools/**'
       - '.github/workflows/validate-web.yml'
   pull_request:
     paths:
@@ -22,6 +24,12 @@ jobs:
         run: |
           node --check docs/app.js
           node --check docs/service-worker.js
+      - name: Verificar extrator e templates de conteúdo
+        run: node tests/web-smoke.cjs
+      - name: Verificar conversor CSV para feed
+        run: |
+          python -m py_compile tools/gerar_feed.py
+          python -c "import json; f=json.load(open('docs/data/ofertas.json', encoding='utf-8')); assert isinstance(f['offers'], list)"
       - name: Verificar arquivos indispensáveis
         run: |
           test -s docs/index.html
