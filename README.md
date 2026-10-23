@@ -12,9 +12,15 @@ A aplicação em `docs/` é **estática e compatível com celular**: importa arq
 
 **Limitação essencial:** GitHub Pages não executa Python, extensões Chrome, Cloudflare Workers ou consultas autenticadas ao Mercado Livre. A página pública **não varre as 20 páginas de ofertas ao vivo**. Captura automática depende de acesso autorizado e de um backend separado.
 
+## Exportar ofertas no Chrome
+
+A [extensão de desktop](extension-chrome/) foi adicionada ao repositório. Ela consulta, sob comando explícito, até 20 páginas das seções públicas de ofertas (sem contornar bloqueios), registra anúncios em armazenamento local e exporta arquivos **JSON/CSV**. Os arquivos são importados na interface web.
+
+O **Chrome de celular não executa extensões de desktop**. No Android, instale o Observatório como PWA e importe os arquivos, ou compartilhe HTML/CSV/JSON pelo menu Compartilhar quando suportado. No iPhone, use o seletor de arquivos no portal. Consulte [o manual da extensão](extension-chrome/README.md).
+
 ## Monorepo
 
-- `docs/`: dashboard estático/mobile para GitHub Pages (frontend principal).
+- `docs/`: dashboard estático/mobile para GitHub Pages (frontend principal), com importação de arquivos por compartilhamento PWA quando suportada.\n- `extension-chrome/`: extensão MV3 de exportação de consultas em Chrome desktop (sem depender do Python).
 - `apps/instagram-comment-dm/`: cópia do aplicativo de automação Instagram/DM. As migrações legadas 0004, 0005, 0006 e 0008 com credenciais/identificadores fixos foram neutralizadas e a configuração do Worker foi isolada para não replicar dados de acesso no novo repositório público. O repositório de origem não foi modificado.
 - `desktop/`: documentação e estado da migração do Observatório local com extensão Chrome e histórico SQLite (o código desktop legado ainda não foi incorporado integralmente).\n- `tools/gerar_feed.py`: prepara um feed JSON público a partir de CSV sem tokens nem sessões.\n- `tests/web-smoke.cjs`: testes de parser, ranking, prompt Veo, legenda e DM.
 
