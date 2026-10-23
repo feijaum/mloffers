@@ -1,26 +1,40 @@
-// Observatório ML — início do backend, mantendo os arquivos públicos no Cloudflare Assets.
-// Este worker NÃO envia DMs nem gera vídeos até existirem autenticação, filas e limites.
-function reply(data,status=200){return new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}})}
-async function sameSecret(a,b){if(!a||!b)return false;const encoder=new TextEncoder();const key=await crypto.subtle.importKey("raw",encoder.encode(b),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=new Uint8Array(await crypto.subtle.sign("HMAC",key,encoder.encode("verify")));const candidateKey=await crypto.subtle.importKey("raw",encoder.encode(a),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const got=new Uint8Array(await crypto.subtle.sign("HMAC",candidateKey,encoder.encode("verify")));return expected.every((v,i)=>v===got[i])}
+// Observatório ML: assets públicos e recebimento autenticado de webhooks Instagram.
+// O sistema armazena eventos em D1, MAS NUNCA envia mensagens automaticamente nesta fase.
+const encoder=new TextEncoder();
+const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
+function constantTimeHex(a,b){if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0}
+function constantTimeString(a,b){if(!a||!b)return false;const aa=encoder.encode(a),bb=encoder.encode(b);if(aa.length!==bb.length)return false;let diff=0;for(let i=0;i<aa.length;i++)diff|=aa[i]^bb[i];return diff===0}
+async function digestHex(data){const digest=await crypto.subtle.digest("SHA-256",data);return Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,"0")).join("")}
+async function validMetaSignature(body,signature,secret){if(!secret||!/^sha256=[a-f0-9]{64}$/i.test(signature||""))return false;const key=await crypto.subtle.importKey("raw",encoder.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const expected=await crypto.subtle.sign("HMAC",key,body);const hex=Array.from(new Uint8Array(expected),b=>b.toString(16).padStart(2,"0")).join("");return constantTimeHex(hex,signature.slice(7).toLowerCase())}
 export default {
  async fetch(request,env){
   const url=new URL(request.url);
-  if(url.pathname==="/api/health"&&request.method==="GET")return reply({status:"ok",service:"observatorio-ml",api:"scaffold"});
+  if(url.pathname==="/api/health"&&request.method==="GET")return json({status:"ok",service:"observatorio-ml",api:"webhook-ready",webhook_storage_configured:Boolean(env.DB&&env.META_APP_SECRET)});
   if(url.pathname==="/api/instagram/webhook"){
    if(request.method==="GET"){
-    const mode=url.searchParams.get("hub.mode");
-    const token=url.searchParams.get("hub.verify_token");
-    const challenge=url.searchParams.get("hub.challenge");
-    if(mode!=="subscribe"||!challenge||!env.INSTAGRAM_VERIFY_TOKEN||!(await sameSecret(token,env.INSTAGRAM_VERIFY_TOKEN)))return new Response("Forbidden",{status:403});
+    const mode=url.searchParams.get("hub.mode"),token=url.searchParams.get("hub.verify_token"),challenge=url.searchParams.get("hub.challenge");
+    if(mode!=="subscribe"||!challenge||!env.INSTAGRAM_VERIFY_TOKEN||!constantTimeString(token,env.INSTAGRAM_VERIFY_TOKEN))return new Response("Forbidden",{status:403});
     return new Response(challenge,{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
    }
-   // Nunca retornar 200 a eventos ainda não processados: webhook de comentários
-   // exige assinatura Meta validada, idempotência e banco antes de ser habilitado.
-   return reply({error:"Webhook de eventos ainda não configurado"},503);
+   if(request.method!=="POST")return json({error:"Método não permitido"},405);
+   if(!env.META_APP_SECRET||!env.DB)return json({error:"Webhook ainda não configurado com Secret e D1"},503);
+   const length=Number(request.headers.get("content-length")||"0");
+   if(length>256000)return json({error:"Payload muito grande"},413);
+   const body=await request.arrayBuffer();
+   if(body.byteLength>256000)return json({error:"Payload muito grande"},413);
+   if(!await validMetaSignature(body,request.headers.get("x-hub-signature-256"),env.META_APP_SECRET))return json({error:"Assinatura inválida"},401);
+   let data;try{data=JSON.parse(new TextDecoder().decode(body))}catch{return json({error:"JSON inválido"},400)}
+   if(!data||data.object!=="instagram"||!Array.isArray(data.entry))return json({error:"Evento não é Instagram"},400);
+   const key=await digestHex(body);
+   try{
+    await env.DB.prepare("INSERT OR IGNORE INTO instagram_webhook_events (event_hash,event_type,payload_json,status,received_at) VALUES (?1,?2,?3,'pending',datetime('now'))")
+     .bind(key,"instagram",JSON.stringify(data)).run();
+   }catch(error){console.error("Instagram webhook persistence unavailable",String(error).slice(0,180));return json({error:"Falha ao registrar evento"},503)}
+   return new Response("EVENT_RECEIVED",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
   }
-  if(url.pathname.startsWith("/api/instagram/"))return reply({error:"Integração Instagram ainda não ativada"},503);
-  if(url.pathname.startsWith("/api/video/"))return reply({error:"Geração de vídeo ainda não ativada"},503);
-  if(url.pathname.startsWith("/api/"))return reply({error:"Rota não encontrada"},404);
+  if(url.pathname.startsWith("/api/instagram/"))return json({error:"Gestão Instagram ainda não ativada"},503);
+  if(url.pathname.startsWith("/api/video/"))return json({error:"Geração de vídeo ainda não ativada"},503);
+  if(url.pathname.startsWith("/api/"))return json({error:"Rota não encontrada"},404);
   return env.ASSETS.fetch(request);
  }
 };
