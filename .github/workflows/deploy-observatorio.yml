@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'worker/**'
       - 'wrangler.jsonc'
       - '.github/workflows/deploy-observatorio.yml'
   workflow_dispatch:
@@ -18,7 +19,7 @@ permissions:
 
 jobs:
   deploy:
-    name: Deploy static assets
+    name: Deploy site and API Worker
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
