@@ -1,3 +1,4 @@
+import { videoApi } from "./video.js";
 import { registerEligibleComments } from "./comment-matcher.js";
 // Observatório ML: assets públicos e recebimento autenticado de webhooks Instagram.
 // O sistema armazena eventos em D1, MAS NUNCA envia mensagens automaticamente nesta fase.
@@ -37,7 +38,7 @@ export default {
    return new Response("EVENT_RECEIVED",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
   }
   if(url.pathname.startsWith("/api/instagram/"))return json({error:"Gestão Instagram ainda não ativada"},503);
-  if(url.pathname.startsWith("/api/video/"))return json({error:"Geração de vídeo ainda não ativada"},503);
+  if(url.pathname.startsWith("/api/video/"))return videoApi(request,env,url);
   if(url.pathname.startsWith("/api/"))return json({error:"Rota não encontrada"},404);
   return env.ASSETS.fetch(request);
  }
