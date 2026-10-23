@@ -28,7 +28,7 @@ v("video-generate").onclick=async()=>{try{
 if(!authenticated)throw Error("Faça login no estúdio.");if(!selected)throw Error("Selecione um produto.");if(!v("video-confirm").checked)throw Error("Confirme o custo antes de gerar.");
 if(!confirm("Enviar este prompt ao Google Veo? A geração pode consumir créditos pagos da sua conta."))return;
 v("video-generate").disabled=true;status("Enviando geração ao Google...");
-const r=await call("generate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt:v("video-prompt").value,model:v("video-model").value,confirmCost:true})});
+const r=await call("generate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({prompt:v("video-prompt").value,model:v("video-model").value,confirmCost:true,imageUrl:v("video-use-image").checked?(selected.image||""):""})});
 status("Geração iniciada: "+r.id+". Você pode consultar o resultado em Vídeos recentes.");v("video-confirm").checked=false;await refreshJobs()
 }catch(e){status(e.message)}finally{v("video-generate").disabled=false}};
 v("video-refresh").onclick=refreshJobs;
