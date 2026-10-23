@@ -1,0 +1,7 @@
+{
+  "format": "observatorio-ml-offers",
+  "version": 1,
+  "generatedAt": null,
+  "notice": "Publicação demonstrativa sem ofertas: execute tools/gerar_feed.py e envie o JSON para este repositório.",
+  "offers": []
+}
