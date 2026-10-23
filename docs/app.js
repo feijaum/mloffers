@@ -115,25 +115,23 @@ function renderRanking(){
 }
 function makeFlow(x){
  const [category]=niche(x.title);
- const health=/creatina|whey|hipercal|suplemento/i.test(x.title)?'Não prometa benefícios de saúde, ganho muscular ou resultados físicos. ':'';
  return [
- 'PROJETO: VÍDEO PROMOCIONAL CRIADO COM VEO NO GOOGLE FLOW.',
- 'No Google Flow, selecione manualmente um modelo Veo disponível e configure vídeo vertical 9:16. O texto do prompt não troca o modelo por si só.',
- '',
- 'Crie um clipe publicitário vertical de aproximadamente 8 segundos, elegante e natural, com ritmo envolvente para Reels e TikTok.',
- 'Produto: '+x.title+'.','Nicho: '+category+'.',
- 'Use a imagem do produto anexada como referência visual obrigatória. Preserve marca, formato, proporções e cores, sem inventar acessórios, funcionalidades ou resultados.',
- 'Cena 1 (0-2s): close atraente do produto, movimento de câmera leve e iluminação de estúdio. Gancho: "Olha esse achado!".',
- 'Cena 2 (2-6s): destaque visual do produto em seu contexto de uso apenas quando isso puder ser representado sem inventar propriedades. Mostrar detalhes de forma limpa.',
- 'Cena 3 (6-8s): encerre com destaque para o produto e espaço visual para inserir o CTA na edição: "COMENTE EU QUERO".',
- 'Voz ou narração, se disponível, em português brasileiro, tom amigável e direto. Música suave que não comprometa a fala.',
- 'Não inclua a instrução "link na bio". O objetivo é incentivar comentários com a expressão exata EU QUERO e usar o link na própria legenda.',
- 'Na edição do vídeo, acrescente a sobreposição "Comente EU QUERO" se o texto gerado não estiver perfeito.',
- 'Preço registrado na captura: '+money(x.price)+(x.discount!=null?' · '+x.discount+'% OFF anunciado':'')+'. Confirme os valores antes de inserir números no vídeo.',
- 'Condições: '+(x.pix?'preço no Pix; ':'')+(x.couponPrice!=null||x.couponDiscount!=null?'cupom pode exigir elegibilidade; ':'')+'estoque, disponibilidade e frete devem ser conferidos.',
- 'Não afirme que é o menor preço da internet. Não invente escassez, popularidade, depoimentos ou garantias.',
- health+'Não prometa volume de vendas ou comissão. Conteúdo destinado a divulgação de afiliado com transparência.'
- ].filter(Boolean).join('\n');
+  "VÍDEO PARA GOOGLE FLOW — SEM TEXTOS SOBREPOSTOS.",
+  "Crie um vídeo publicitário vertical 9:16 de aproximadamente 8 segundos para Reels, com estilo cinematográfico e natural.",
+  "Produto: "+x.title+". Categoria: "+category+".",
+  "Use a imagem original do produto como referência. Preserve formas, cores, proporções, marcas e inscrições que já existam fisicamente no item. Não invente funções, acessórios nem benefícios.",
+  "Cena 1 (0–2s): close atraente no produto com iluminação de estúdio.",
+  "Cena 2 (2–5s): detalhes físicos e acabamento com câmera suave.",
+  "Cena 3 (5–8s): contexto de uso plausível e enquadramento final com o produto em destaque.",
+  "REGRA FUNDAMENTAL: NÃO adicionar nenhum texto legível ou tipografia na imagem.",
+  "Sem títulos, legendas, subtítulos, preços, números, promoções, selos, slogans, CTAs escritos, botões, interfaces, banners ou marcas d'água.",
+  "Não modificar inscrições e logotipos originais que já existam no produto de referência.",
+  "Reserve espaço visual livre no topo e na parte inferior para aplicar título e CTA depois da geração.",
+  "NÃO escrever EU QUERO no vídeo; a chamada será inserida na pós-edição.",
+  "Áudio opcional natural, português brasileiro se houver narração, sem legendas automáticas.",
+  "Não apresentar descontos, escassez, garantias, depoimentos ou atributos não comprovados.",
+  "Somente vídeo visual e áudio, sem qualquer texto publicitário sobreposto."
+ ].join("\n");
 }
 function makeCaption(x){const link=x.affiliate||x.url||'[COLE SEU LINK DE AFILIADO]';
  return ['✨ ACHADO DO DIA!','',x.title,'💰 Preço na captura: '+money(x.price)+(x.discount!=null?' ('+x.discount+'% OFF anunciado)':''),x.pix?'📲 Valor exibido no Pix; confira as condições.':'',x.couponPrice!=null||x.couponDiscount!=null?'🎟️ Pode haver cupom sujeito à elegibilidade.':'','', '💬 Quer receber a oferta? Comente EU QUERO que eu te envio o link por mensagem!','','🔗 Link da oferta nesta publicação: '+link,'','Publicidade / link de afiliado. Preço e disponibilidade podem mudar; confira antes de comprar.','#achadinhos #ofertas #mercadolivre'].filter(Boolean).join('\n')}
