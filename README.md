@@ -8,15 +8,15 @@ Depois de ativar **Settings → Pages → Deploy from a branch → main → /doc
 
 https://feijaum.github.io/mloffers/
 
-A aplicação em `docs/` é **estática e compatível com celular**: importa arquivos HTML de ofertas que você já possui, calcula ranking local, prepara prompt Veo, legenda, CTA e modelo de DM; exporta o pacote. Os dados importados ficam no **navegador deste dispositivo**, sem sincronização entre celular e PC.
+A aplicação em `docs/` é **estática e compatível com celular**: importa arquivos HTML de ofertas que você já possui, calcula ranking local, prepara prompt Veo, legenda, CTA e modelo de DM; exporta o pacote. Os dados importados ficam no **navegador deste dispositivo**. Para compartilhar uma seleção entre PC e celular sem expor o banco, publique o feed **docs/data/ofertas.json** com **tools/gerar_feed.py** e use o botão **Carregar seleção publicada no GitHub**.
 
 **Limitação essencial:** GitHub Pages não executa Python, extensões Chrome, Cloudflare Workers ou consultas autenticadas ao Mercado Livre. A página pública **não varre as 20 páginas de ofertas ao vivo**. Captura automática depende de acesso autorizado e de um backend separado.
 
 ## Monorepo
 
 - `docs/`: dashboard estático/mobile para GitHub Pages (frontend principal).
-- `apps/instagram-comment-dm/`: cópia do aplicativo de automação Instagram/DM. Alguns scripts legados de migração com credenciais fixas foram neutralizados para não replicar dados de acesso no novo repositório público. O repositório de origem não foi modificado.
-- `desktop/`: documentação para uso do Observatório local com extensão Chrome e histórico SQLite.
+- `apps/instagram-comment-dm/`: cópia do aplicativo de automação Instagram/DM. As migrações legadas 0004, 0005, 0006 e 0008 com credenciais/identificadores fixos foram neutralizadas e a configuração do Worker foi isolada para não replicar dados de acesso no novo repositório público. O repositório de origem não foi modificado.
+- `desktop/`: documentação e estado da migração do Observatório local com extensão Chrome e histórico SQLite (o código desktop legado ainda não foi incorporado integralmente).\n- `tools/gerar_feed.py`: prepara um feed JSON público a partir de CSV sem tokens nem sessões.\n- `tests/web-smoke.cjs`: testes de parser, ranking, prompt Veo, legenda e DM.
 
 ## Regra de publicação
 
