@@ -50,7 +50,28 @@ export async function videoApi(request,env,url) {
   const id=jobId();
   await env.DB.prepare("INSERT INTO video_jobs (id,model,prompt,status,created_at) VALUES (?1,?2,?3,'requesting',?4)").bind(id,model,prompt,new Date().toISOString()).run();
   // A imagem do produto permanece referência manual até existir pipeline de upload com controle de tamanho.
-  const result=await googleFetch("models/"+model+":predictLongRunning",env,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({instances:[{prompt}],parameters:{aspectRatio:"9:16",numberOfVideos:1,resolution:"720p"}})});
+  const instance={prompt};
+  if(body.imageUrl){
+   try{
+    const imageUrl=new URL(body.imageUrl);
+    if(imageUrl.protocol!=="https:"||!["http2.mlstatic.com","http2.mlstatic.com.ar"].includes(imageUrl.hostname))throw Error("Imagem precisa ser hospedada no Mercado Livre");
+    const response=await fetch(imageUrl.toString(),{redirect:"error"});
+    if(!response.ok)throw Error("Imagem do produto indisponível");
+    const mime=response.headers.get("content-type")?.split(";")[0]?.trim();
+    if(!["image/png","image/jpeg","image/webp"].includes(mime))throw Error("Formato de imagem incompatível");
+    if(Number(response.headers.get("content-length")||0)>4*1024*1024)throw Error("Imagem acima de 4 MB");
+    const bytes=new Uint8Array(await response.arrayBuffer());
+    if(bytes.length>4*1024*1024)throw Error("Imagem acima de 4 MB");
+    let encoded="";for(let i=0;i<bytes.length;i+=0x4000)encoded+=String.fromCharCode(...bytes.subarray(i,i+0x4000));
+    instance.image={inlineData:{mimeType:mime,data:btoa(encoded)}};
+   }catch(error){
+    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(String(error.message||error).slice(0,300),id).run();
+    return resp({error:"Não foi possível preparar a imagem do produto",details:String(error.message||error)},400);
+   }
+  }
+  let result;
+  try{result=await googleFetch("models/"+model+":predictLongRunning",env,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({instances:[instance],parameters:{aspectRatio:"9:16",numberOfVideos:1,resolution:"720p"}})})}
+  catch(error){await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(String(error.message||error).slice(0,300),id).run();return resp({error:"Falha na comunicação com Google"},502)}
   if(result.status>=400||!result.data?.name){
    await env.DB.prepare("UPDATE video_jobs SET status='failed',error=?1 WHERE id=?2").bind(JSON.stringify(result.data?.error||result.data).slice(0,800),id).run();
    return resp({error:"Google não iniciou o vídeo",details:result.data?.error?.message||"Confira sua conta, modelo e faturamento."},result.status>=400&&result.status<500?result.status:502);
