@@ -13,10 +13,11 @@
 <body>
 <header class="header">
   <div class="brand"><span class="logo">↗</span><span><strong>OBSERVATÓRIO<span class="lime">ML</span></strong><small>Ofertas, vídeos e conversão</small></span></div>
-  <div class="header-actions"><span class="chip">Versão Web · GitHub Pages</span><a class="mini-link" href="https://github.com/feijaum/mloffers" target="_blank" rel="noreferrer">Código ↗</a></div>
+  <div class="header-actions"><span class="chip">Versão Web · Cloudflare</span><a class="mini-link" href="https://github.com/feijaum/mloffers" target="_blank" rel="noreferrer">Código ↗</a></div>
 </header>
+<nav class="app-tabs" aria-label="Seções do Observatório"><button class="app-tab active" data-tab="ofertas" aria-selected="true">⌕ Ofertas</button><button class="app-tab" data-tab="conteudo" aria-selected="false">✦ Conteúdo</button><button class="app-tab" data-tab="instagram" aria-selected="false">◎ Instagram</button><button class="app-tab" data-tab="config" aria-selected="false">⚙ Configurações</button></nav>
 <main class="layout">
-<section class="hero">
+<div data-pane="ofertas"><section class="hero">
 <div><div class="eyebrow">INTELIGÊNCIA DE OFERTAS PARA AFILIADOS</div><h1>Do produto ao <em>vídeo que vende.</em></h1><p>Analise capturas de ofertas, descubra produtos promissores e monte seu pacote de divulgação com imagem, prompt para <b>Veo no Google Flow</b>, legenda e comentário <strong>EU QUERO</strong>.</p></div>
 <div class="hero-buttons"><a class="btn primary" href="#importar">+ Importar ofertas</a><a class="btn secondary" href="#ranking">Ver ranking ↓</a></div>
 </section>
@@ -41,12 +42,16 @@
 </div>
 <div class="cards" id="cards"><div class="empty"><span class="empty-icon">☆</span><strong>Seu ranking aparecerá aqui</strong><p>Comece importando HTMLs de ofertas ou o CSV da versão de computador.</p><a href="#importar" class="btn primary small">Importar agora</a></div></div>
 </section>
-<section class="panel support">
+</div>
+<div data-pane="conteudo" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">ESTÚDIO DE CONTEÚDO</div><h2>Prompts Veo e legendas</h2><p>Escolha uma oferta na aba Ofertas e clique em gerar kit. O prompt, a legenda e a mensagem de DM aparecerão juntos, com a imagem do produto.</p></div></div><div class="studio-guide"><strong>Fluxo de criação</strong><p>1. Importe e selecione uma oferta. 2. Informe seu link de afiliado. 3. Gere e copie o prompt para o Google Flow com Veo. 4. Revise a legenda antes de publicar.</p><button class="btn primary" type="button" data-goto="ofertas">Escolher produto →</button></div></section></div>
+<div data-pane="instagram" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">AUTOMAÇÃO DE COMENTÁRIOS</div><h2>Gerenciamento do Instagram</h2><p>A automação de comentários continua independente, com suas próprias credenciais e banco de dados. Nenhum token é compartilhado com este painel público.</p></div></div><div class="studio-guide"><strong>Instagram Comment DM</strong><p>Gerencie as publicações e as respostas ao comentário “EU QUERO” no aplicativo original. A integração direta com este painel será habilitada somente após configurar uma API autenticada.</p><a class="btn primary" href="https://instagram-comment-dm.jvleite7.workers.dev" target="_blank" rel="noopener noreferrer">Abrir gerenciador do Instagram ↗</a></div></section></div>
+<div data-pane="config" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">PREFERÊNCIAS E ACESSO</div><h2>Configurações</h2><p>Confira o estado do painel e as integrações planejadas.</p></div></div><div class="settings-list"><div><strong>Armazenamento de ofertas</strong><span>Local neste navegador (IndexedDB)</span></div><div><strong>Automação do Instagram</strong><span>Aplicação externa — conexão segura pendente</span></div><div><strong>Google Flow / Veo</strong><span>Prompt manual disponível; geração automática ainda não conectada</span></div><div><strong>Login do painel</strong><span>Planejado — não ativado</span></div></div><div class="studio-guide"><strong>Prévia do acesso futuro</strong><p>Quando o backend de autenticação estiver pronto, este painel poderá exigir login. Por segurança, nenhum formulário de senha fictício será ativado agora.</p><button class="btn secondary" type="button" disabled>Login — em preparação</button></div></section></div>
+<div data-pane="ofertas"><section class="panel support">
 <div class="panel-head"><div><div class="eyebrow">PASSO 3 · PUBLICAÇÃO</div><h2>Como usar no celular</h2></div></div>
 <div class="steps"><div><b>1</b><strong>Selecione uma oferta</strong><span>Confira o valor, a imagem e a URL do produto.</span></div><div><b>2</b><strong>Copie o prompt Veo</strong><span>No Google Flow, selecione Veo e use a imagem como referência.</span></div><div><b>3</b><strong>Publique o conteúdo</strong><span>A legenda terá o link da própria publicação e pedirá “Comente EU QUERO”.</span></div><div><b>4</b><strong>Associe à sua DM</strong><span>Configure o ID do post, o produto e o link correto no seu sistema de automação.</span></div></div>
 <p class="fine">Observação: links em legendas do Instagram podem não ser clicáveis; a DM permite disponibilizar o link de forma mais prática. O pacote não publica nem envia mensagens sozinho. Preços são referentes às capturas e precisam ser verificados antes de postar.</p>
 </section>
-<footer>Observatório ML · Dados privados no navegador · <a href="https://github.com/feijaum/instagram-comment-dm" target="_blank" rel="noreferrer">Automação Instagram ↗</a></footer>
+</div><footer>Observatório ML · Dados privados no navegador · <a href="https://github.com/feijaum/instagram-comment-dm" target="_blank" rel="noreferrer">Automação Instagram ↗</a></footer>
 </main>
 <dialog id="kit-dialog">
 <div class="dialog-header"><div><div class="eyebrow">PACOTE PARA PUBLICAÇÃO</div><h2 id="kit-title"></h2></div><button id="close-dialog" class="icon-btn" aria-label="Fechar">✕</button></div>
@@ -62,6 +67,9 @@
 </div>
 </dialog>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<script>
+(function(){const tabs=[...document.querySelectorAll('[data-tab]')],panes=[...document.querySelectorAll('[data-pane]')];function show(name){if(!tabs.some(t=>t.dataset.tab===name))name='ofertas';tabs.forEach(t=>{const active=t.dataset.tab===name;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active))});panes.forEach(p=>p.hidden=p.dataset.pane!==name);history.replaceState(null,'','#'+name);window.scrollTo({top:0,behavior:'instant'});}tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.goto)));document.querySelectorAll('a[href="#importar"],a[href="#ranking"]').forEach(a=>a.addEventListener('click',()=>show('ofertas')));show(['ofertas','conteudo','instagram','config'].includes(location.hash.slice(1))?location.hash.slice(1):'ofertas');})();
+</script>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
