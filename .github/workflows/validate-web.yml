@@ -4,12 +4,15 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'extension-chrome/**'
       - 'tests/**'
       - 'tools/**'
       - '.github/workflows/validate-web.yml'
   pull_request:
     paths:
       - 'docs/**'
+      - 'extension-chrome/**'
+      - 'tests/**'
 permissions:
   contents: read
 jobs:
@@ -24,8 +27,13 @@ jobs:
         run: |
           node --check docs/app.js
           node --check docs/service-worker.js
+          node --check extension-chrome/background.js
+          node --check extension-chrome/capture.js
+          node --check extension-chrome/popup.js
       - name: Verificar extrator e templates de conteúdo
         run: node tests/web-smoke.cjs
+      - name: Testar extensão Chrome e compartilhamento móvel
+        run: node tests/extension-smoke.cjs
       - name: Verificar conversor CSV para feed
         run: |
           python -m py_compile tools/gerar_feed.py
