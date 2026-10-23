@@ -69,7 +69,7 @@ function normalize(x){
  const id=str(x.id||x.item_id,35),title=str(x.title,400),price=number(x.price);
  if(!/^MLB\d{7,14}$/.test(id)||!title||price===null)return null;
  const bool=x=>x===true||x===1||x==='1'||x==='true'||x==='True';
- return{id,title,price,previous:number(x.previous),discount:number(x.discount),seller:str(x.seller,150),rating:number(x.rating),sold:str(x.sold,100),source:str(x.source||'importado',40),image:normalizedUrl(x.image,true),url:normalizedUrl(x.url),pix:bool(x.pix),shipping:bool(x.shipping),couponPrice:number(x.couponPrice),couponDiscount:number(x.couponDiscount),expiry:str(x.expiry,90),importedAt:Date.now()};
+ return{id,title,price,previous:number(x.previous),discount:number(x.discount),seller:str(x.seller,150),rating:number(x.rating),sold:str(x.sold,100),source:str(x.source||'importado',40),image:normalizedUrl(x.image,true),url:normalizedUrl(x.url),affiliate:affiliateUrl(x.affiliate),pix:bool(x.pix),shipping:bool(x.shipping),couponPrice:number(x.couponPrice),couponDiscount:number(x.couponDiscount),expiry:str(x.expiry,90),importedAt:Date.now()};
 }
 function parseJSON(text){const obj=JSON.parse(text);const list=Array.isArray(obj)?obj:obj.offers;if(!Array.isArray(list))throw Error('JSON não contém uma lista offers.');return list.map(normalize).filter(Boolean)}
 async function importFiles(files){
