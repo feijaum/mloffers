@@ -3,6 +3,11 @@
   "name": "observatorio-ml",
   "compatibility_date": "2026-10-01",
   "assets": {
-    "directory": "./docs"
-  }
+    "directory": "./docs",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "main": "./worker/index.js"
 }
