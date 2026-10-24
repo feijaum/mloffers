@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Observatório ML — Links de Afiliado",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Associa links oficiais de afiliado aos 20 primeiros produtos do ranking Observatório ML, sob comando do usuário.",
   "permissions": [
     "tabs",
@@ -10,7 +10,9 @@
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
     "https://produto.mercadolivre.com.br/*",
-    "https://feijaum.github.io/*"
+    "https://feijaum.github.io/*",
+    "https://*.pages.dev/*",
+    "https://*.workers.dev/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -18,7 +20,9 @@
   "content_scripts": [
     {
       "matches": [
-        "https://feijaum.github.io/mloffers/*"
+        "https://feijaum.github.io/mloffers/*",
+        "https://*.pages.dev/*",
+        "https://*.workers.dev/*"
       ],
       "js": [
         "dashboard.js"
