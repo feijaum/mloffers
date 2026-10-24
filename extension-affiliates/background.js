@@ -21,9 +21,10 @@ chrome.runtime.onMessage.addListener((msg,sender,respond)=>{
    if(old?.status==='running')return {ok:false,error:'Há uma coleta em andamento. Use Cancelar antes de iniciar novamente.'};
    const items=(msg.items||[]).slice(0,20).filter(x=>/^MLB\d{7,14}$/.test(x.id)&&/^https:\/\/(www|produto)\.mercadolivre\.com\.br\//.test(x.url));
    if(!items.length)return {ok:false,error:'Nenhum produto com URL pública válida foi encontrado no ranking.'};
-   const batch={status:'running',index:0,items,done:[],productTab:null,dashboardTab:sender.tab.id,startedAt:Date.now()};
+   const batch={status:'running',index:0,items,done:[],productTab:null,dashboardTab:sender.tab?.id||null,startedAt:Date.now()};
    await setBatch(batch);await openCurrent(batch);return {ok:true,total:items.length};
   }
+  if(msg.type==='OML_EXPORT')return {ok:true,batch:await getBatch()};
   if(msg.type==='OML_STATUS')return {ok:true,batch:await getBatch()};
   if(msg.type==='OML_CANCEL'){const b=await getBatch();if(b){b.status='cancelled';await setBatch(b);}return {ok:true};}
   if(msg.type==='OML_CAPTURE'){
@@ -33,13 +34,11 @@ chrome.runtime.onMessage.addListener((msg,sender,respond)=>{
    const url=msg.affiliate;
    if(!/^https:\/\/(meli\.la|www\.mercadolivre\.com\.br|mercadolivre\.com\.br)\//i.test(url||''))return {ok:false,error:'Link de divulgação não reconhecido.'};
    if(b.done.some(x=>x.id===current.id))return {ok:false,error:'Produto já capturado.'};
-   try{
-    const ack=await chrome.tabs.sendMessage(b.dashboardTab,{type:'OML_SAVE_LINK',id:current.id,affiliate:url});
-    if(!ack?.ok)throw Error(ack?.error||'Falha ao gravar no painel');
-   }catch(e){return {ok:false,error:'Mantenha a aba do Observatório ML aberta: '+e.message};}
+   // A coleta por CSV é independente do painel. Salva localmente e exporta no fim.
+   if(b.dashboardTab){try{await chrome.tabs.sendMessage(b.dashboardTab,{type:'OML_SAVE_LINK',id:current.id,affiliate:url});}catch{} }
    b.done.push({id:current.id,affiliate:url});b.index++;await setBatch(b);
    if(b.index<b.items.length)await openCurrent(b);
-   else {b.status='finished';await setBatch(b);try{await chrome.tabs.update(b.dashboardTab,{active:true});}catch{}}
+   else {b.status='finished';await setBatch(b);if(b.dashboardTab)try{await chrome.tabs.update(b.dashboardTab,{active:true});}catch{}}
    return {ok:true,next:b.index,total:b.items.length};
   }
   return {ok:false,error:'Mensagem desconhecida'};
