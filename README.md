@@ -6,7 +6,7 @@
 
 Uma ferramenta independente para organizar ofertas do Mercado Livre, identificar produtos com potencial de divulgação e preparar conteúdos para Instagram, Reels, TikTok e Google Flow.
 
-**[Acessar plataforma web](https://feijaum.github.io/mloffers/)** · **[Instalar extensão Chrome](extension-chrome/README.md)** · **[Automação de comentários e DM](apps/instagram-comment-dm/)**
+**[Acessar plataforma web](https://feijaum.github.io/mloffers/)** · **[Instalar extensão Chrome](extension-chrome/README.md)** · **[Capturar links de afiliado do Top 20](extension-affiliates/README.md)** · **[Automação de comentários e DM](apps/instagram-comment-dm/)**
 
 [![Validação do projeto](https://github.com/feijaum/mloffers/actions/workflows/validate-web.yml/badge.svg)](https://github.com/feijaum/mloffers/actions/workflows/validate-web.yml)
 
@@ -111,6 +111,7 @@ O **Chrome móvel não instala esta extensão de desktop**. A captura de página
 mloffers/
 ├── docs/                     # Aplicação web, ranking, kits de conteúdo e PWA
 ├── extension-chrome/         # Captura sob demanda e exportação JSON/CSV
+├── extension-affiliates/     # Preenchimento local de links oficiais do Top 20
 ├── apps/
 │   └── instagram-comment-dm/ # Cópia do projeto de comentários e mensagens
 ├── tools/
