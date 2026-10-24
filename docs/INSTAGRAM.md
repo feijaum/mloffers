@@ -47,3 +47,9 @@ O histórico distingue evento recebido, regra ausente/pausada, palavra-chave nã
 Para um Reel existente, use **Ativar resposta** na lista; não é necessário republicar o vídeo. A ativação não reenvia DMs para comentários já processados. Faça um comentário novo para testar.
 
 A assinatura da conta em `/subscribed_apps` não configura a URL de Webhooks do aplicativo Meta. Se não houver eventos, confira no app **Observatorio ML** o callback `https://observatorio-ml.jvleite7.workers.dev/api/instagram/webhook`, o token de verificação correspondente ao Secret e o campo `comments`. O histórico registra a confirmação de callback, a chegada HTTP e a validação de assinatura separadamente. A ausência de registro de confirmação não prova que um callback validado antes desta atualização esteja incorreto.
+
+## Compatibilidade com o Worker original
+
+O webhook aceita `INSTAGRAM_VERIFY_TOKEN` e, se não estiver definido, `META_WEBHOOK_VERIFY_TOKEN` (nome utilizado no instagram-comment-dm). Se os dois estiverem configurados, `INSTAGRAM_VERIFY_TOKEN` tem prioridade. Esse token confirma a URL no GET; ele não valida a assinatura dos eventos POST.
+
+A assinatura usa o corpo bruto recebido e `META_APP_SECRET` em HMAC-SHA256, como no código original. O diagnóstico distingue cabeçalho de assinatura ausente, formato inválido e assinatura bem formada divergente. Nenhum segredo nem assinatura calculada é exibido. Cada Worker deve usar o App Secret do aplicativo que assina os eventos enviados ao seu callback; nomes de variáveis iguais não comprovam valores iguais.

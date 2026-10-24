@@ -1,3 +1,4 @@
+import { webhookVerifyToken } from "./meta-signature.js";
 import { session, videoApi } from './video.js';
 import { matchesKeyword } from './comment-matcher.js';
 const enc=new TextEncoder();
@@ -86,7 +87,7 @@ export async function instagramApi(request,env,url){try{
  }
  if(path==='/api/instagram/status'){
   let c;try{c=await connection(env)}catch(e){return json({connected:false,error:e.message,callback:url.origin+'/api/instagram/callback',webhook:url.origin+'/api/instagram/webhook'})}
-  return json({connected:true,account:{id:c.account_id,username:c.username},webhookConfigured:Boolean(env.META_APP_SECRET&&env.INSTAGRAM_VERIFY_TOKEN),callback:url.origin+'/api/instagram/callback',webhook:url.origin+'/api/instagram/webhook'});
+  return json({connected:true,account:{id:c.account_id,username:c.username},webhookConfigured:Boolean(env.META_APP_SECRET&&webhookVerifyToken(env)),callback:url.origin+'/api/instagram/callback',webhook:url.origin+'/api/instagram/webhook'});
  }
  if(path==='/api/instagram/upload'&&method==='POST'){
   await cleanup(env);const b=await request.json();if(b.mime!=='video/mp4'||!Number.isInteger(b.size)||b.size<1||b.size>40*1024*1024)throw fail('Envie um vídeo MP4 até 40 MB.');

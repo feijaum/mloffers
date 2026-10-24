@@ -66,5 +66,16 @@ r=await req('rule','POST',{mediaId:'666666666',...draft});assert.equal(r.status,
 globalThis.fetch=async(url,options)=>String(url).includes('/media?')?Response.json(String(url).includes('after=cursor2')?{data:[{id:'666666666'}]}:{data:[{id:'444444444'}],paging:{next:'https://untrusted.example/not-used',cursors:{after:'cursor2'}}}):originalFetch(url,options);
 r=await req('rule','POST',{mediaId:'666666666',...draft});assert.equal(r.status,200,await r.text());globalThis.fetch=originalFetch;
 const verification=await worker.fetch(new Request(origin+'/api/instagram/webhook?hub.mode=subscribe&hub.verify_token=verify&hub.challenge=test-challenge'),env);assert.equal(await verification.text(),'test-challenge');assert.equal(sql.prepare('SELECT status FROM ig_diagnostics WHERE id=?').get('webhook_verification').status,'callback_verified');
-await webhook(event,false);assert.equal(sql.prepare('SELECT status FROM ig_diagnostics WHERE id=?').get('webhook_signature').status,'signature_rejected');
+await webhook(event,false);assert.equal(sql.prepare('SELECT status FROM ig_diagnostics WHERE id=?').get('webhook_signature').status,'signature_malformed');
 console.log('Ownership and delivery diagnostics OK: missing owner, foreign rejection, cursor pagination, callback verification and signature rejection.');
+// Validate against Node's independent HMAC implementation, including the exact raw UTF-8 body.
+const {createHmac}=await import('node:crypto');const {validateMetaSignature,webhookVerifyToken}=await import('../worker/meta-signature.js');
+const raw=' {"text":"EU QUERO! câmera 😊","entry":[]}\r\n';const rawBytes=new TextEncoder().encode(raw);const signature='sha256='+createHmac('sha256','app-specific-secret').update(rawBytes).digest('hex');
+assert.deepEqual(await validateMetaSignature(rawBytes,signature,'app-specific-secret'),{valid:true,reason:'verified'});
+assert.equal((await validateMetaSignature(rawBytes,signature,'another-app-secret')).reason,'mismatch');
+assert.equal((await validateMetaSignature(new TextEncoder().encode(raw.trim()),signature,'app-specific-secret')).reason,'mismatch');
+assert.equal((await validateMetaSignature(rawBytes,null,'app-specific-secret')).reason,'missing_header');
+assert.equal((await validateMetaSignature(rawBytes,'sha256=bad','app-specific-secret')).reason,'malformed_header');
+assert.equal(webhookVerifyToken({META_WEBHOOK_VERIFY_TOKEN:'legacy'}),'legacy');assert.equal(webhookVerifyToken({INSTAGRAM_VERIFY_TOKEN:'current',META_WEBHOOK_VERIFY_TOKEN:'legacy'}),'current');
+const legacyEnv={...env,INSTAGRAM_VERIFY_TOKEN:undefined,META_WEBHOOK_VERIFY_TOKEN:'legacy-verify'};r=await worker.fetch(new Request(origin+'/api/instagram/webhook?hub.mode=subscribe&hub.verify_token=legacy-verify&hub.challenge=legacy-ok'),legacyEnv);assert.equal(await r.text(),'legacy-ok');
+console.log('Signature tests OK: independent raw-body HMAC, wrong secret rejection, header diagnostics, original verification-token name and precedence.');
