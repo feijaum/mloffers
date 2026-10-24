@@ -1,7 +1,8 @@
+import { instagramApi, processComments } from "./instagram.js";
 import { videoApi } from "./video.js";
 import { registerEligibleComments } from "./comment-matcher.js";
 // Observatório ML: assets públicos e recebimento autenticado de webhooks Instagram.
-// O sistema armazena eventos em D1, MAS NUNCA envia mensagens automaticamente nesta fase.
+// Publicações e automações exigem sessão administrativa e ativação explícita da regra.
 const encoder=new TextEncoder();
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store","x-content-type-options":"nosniff"}});
 function constantTimeHex(a,b){if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0}
@@ -33,11 +34,11 @@ export default {
      .bind(key,"instagram",JSON.stringify(data)).run();
    }catch(error){console.error("Instagram webhook persistence unavailable",String(error).slice(0,180));return json({error:"Falha ao registrar evento"},503)}
    // Eventos já gravados podem ser reenviados; o matcher usa comment_id como chave única.
-   try{await registerEligibleComments(data,env.DB)}
+   try{await registerEligibleComments(data,env.DB);await processComments(data,env)}
    catch(error){console.error("Instagram comment classification failed",String(error).slice(0,180));return json({error:"Falha na classificação; o evento foi armazenado para recuperação"},503)}
    return new Response("EVENT_RECEIVED",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
   }
-  if(url.pathname.startsWith("/api/instagram/"))return json({error:"Gestão Instagram ainda não ativada"},503);
+  if(url.pathname.startsWith("/api/instagram/"))return instagramApi(request,env,url);
   if(url.pathname.startsWith("/api/video/"))return videoApi(request,env,url);
   if(url.pathname.startsWith("/api/"))return json({error:"Rota não encontrada"},404);
   return env.ASSETS.fetch(request);

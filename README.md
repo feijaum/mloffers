@@ -31,7 +31,7 @@ O projeto foi pensado para quem trabalha com **marketing de afiliados**, produç
 | **Ranking inteligente** | Notas de prioridade, sinais de conversão e potencial de conteúdo com base nos dados presentes nas capturas. |
 | **Painel web responsivo** | Consulta ao ranking pelo computador ou celular, com busca, filtros e armazenamento local dos produtos importados. |
 | **Conteúdo para Veo** | Prompts prontos para produzir vídeos promocionais no **Google Flow**, com instruções para selecionar um modelo **Veo**. |
-| **Publicações para Instagram** | Legendas, chamadas para ação com **“Comente EU QUERO”**, campos para link de afiliado e modelos de mensagem direta. |
+| **Publicações para Instagram** | Upload de MP4, capa vertical, aplicação de overlays no navegador, legenda reutilizada de Conteúdo e publicação de Reels pela API oficial. |
 | **Importação e exportação** | Arquivos **HTML, CSV e JSON**, backup local e possibilidade de publicar uma seleção no GitHub para acesso em outros dispositivos. |
 
 > **Importante:** o ranking apresenta **estimativas editoriais**, e não probabilidades comprovadas de venda. Os preços são referentes às capturas; confirme preço, estoque, frete, cupom e disponibilidade antes de divulgar.
@@ -78,7 +78,7 @@ O Observatório prepara os materiais; a geração do vídeo ocorre no Google Flo
 
 O repositório também contém uma **cópia do código** do projeto [Instagram Comment DM](apps/instagram-comment-dm/), destinado à automação de respostas por mensagem a partir dos comentários.
 
-Para evitar enviar o produto errado, cada campanha deve relacionar **publicação → produto → link de afiliado → palavra-chave “eu quero”**. O envio de DMs é executado pela aplicação de Instagram configurada separadamente, **não pelo GitHub Pages**.
+Para evitar enviar o produto errado, cada campanha deve relacionar **publicação → produto → link de afiliado → palavra-chave “eu quero”**. O Worker próprio do Observatório ML publica Reels e envia a resposta privada ao comentário elegível, com resposta pública opcional e histórico. A conta profissional deve estar conectada e a regra precisa estar ativa. Consulte o [guia de conexão e publicação](docs/INSTAGRAM.md). O site estático no GitHub Pages não executa essas APIs.
 
 ## Comece a usar
 
@@ -127,7 +127,7 @@ mloffers/
 - **Publicação de seleções:** o feed em `docs/data/ofertas.json`, caso seja atualizado, é público no GitHub. Não inclua credenciais, cookies, informações pessoais ou dados de sessão.
 - **Acesso às ofertas:** a extensão não é uma API oficial do Mercado Livre, não contorna CAPTCHA ou bloqueios e não garante acesso a todas as páginas. Use-a apenas quando a coleta for permitida.
 - **Ofertas e desempenho:** preço riscado não comprova queda histórica, e a pontuação do ranking não é uma taxa medida de conversão, alcance ou comissão.
-- **Instagram e Veo:** o Observatório não publica posts, não envia DMs por conta própria e não seleciona automaticamente o modelo de geração no Google Flow. Essas ações dependem das ferramentas e configurações correspondentes.
+- **Instagram e Veo:** a publicação de Reels e a automação de DMs funcionam no Worker conectado à sua conta profissional, com senha e ativação por publicação. A geração no Flow continua manual; o modelo é selecionado na interface do Google.
 - **Links nas legendas:** o link pode constar no texto da publicação, mas sua apresentação como link clicável depende dos recursos disponibilizados pelo Instagram.
 
 ## Desenvolvimento e documentação

@@ -25,6 +25,10 @@ jobs:
           node-version: '22'
       - name: Verificar sintaxe JavaScript
         run: |
+          node --check worker/instagram.js
+          node --check docs/instagram-studio.js
+          node --check docs/content-copy.js
+          node --check docs/video-studio.js
           node --check docs/app.js
           node --check docs/service-worker.js
           node --check extension-chrome/background.js
@@ -32,6 +36,8 @@ jobs:
           node --check extension-chrome/popup.js
       - name: Verificar extrator e templates de conteúdo
         run: node tests/web-smoke.cjs
+      - name: Testar segurança e publicação Instagram
+        run: node tests/instagram.test.mjs
       - name: Testar extensão Chrome e compartilhamento móvel
         run: node tests/extension-smoke.cjs
       - name: Verificar conversor CSV para feed

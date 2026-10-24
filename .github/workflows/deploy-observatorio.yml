@@ -29,6 +29,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate application before deployment
+        run: |
+          node --check worker/instagram.js
+          node --check docs/instagram-studio.js
+          node tests/web-smoke.cjs
+          node tests/instagram.test.mjs
       - name: Validate required Cloudflare credentials
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -48,6 +54,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4 d1 execute observatorio-ml-db --remote --config wrangler.jsonc --file migrations/0002_video_jobs.sql
+      - name: Apply Instagram publishing schema
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 d1 execute observatorio-ml-db --remote --config wrangler.jsonc --file migrations/0003_instagram_publishing.sql
       - name: Deploy Observatório ML
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

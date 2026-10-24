@@ -7,8 +7,8 @@ const hex=bytes=>Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"
 async function sign(value,secret){const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);return hex(await crypto.subtle.sign("HMAC",key,enc.encode(value)))}
 function equals(a,b){if(!a||!b||a.length!==b.length)return false;let n=0;for(let i=0;i<a.length;i++)n|=a.charCodeAt(i)^b.charCodeAt(i);return n===0}
 function sameOrigin(request){const origin=request.headers.get("origin");const expected=new URL(request.url).origin;return origin===expected && request.headers.get("sec-fetch-site")!=="cross-site"}
-async function session(request,env){if(!env.VIDEO_SESSION_SECRET)return false;const cookie=parseCookie(request),parts=cookie.split(".");if(parts.length!==2||!/^[0-9]{10,13}$/.test(parts[0]))return false;const expiry=Number(parts[0]);if(expiry<Date.now()||expiry>Date.now()+86400000)return false;return equals(await sign(parts[0],env.VIDEO_SESSION_SECRET),parts[1])}
-function cookie(value,maxAge){return "video_session="+value+"; HttpOnly; Secure; SameSite=Strict; Path=/api/video; Max-Age="+maxAge}
+export async function session(request,env){if(!env.VIDEO_SESSION_SECRET)return false;const cookie=parseCookie(request),parts=cookie.split(".");if(parts.length!==2||!/^[0-9]{10,13}$/.test(parts[0]))return false;const expiry=Number(parts[0]);if(expiry<Date.now()||expiry>Date.now()+86400000)return false;return equals(await sign(parts[0],env.VIDEO_SESSION_SECRET),parts[1])}
+function cookie(value,maxAge){return "video_session="+value+"; HttpOnly; Secure; SameSite=Strict; Path=/api; Max-Age="+maxAge}
 async function googleFetch(path,env,options){const r=await fetch(api+path,{...options,headers:{"x-goog-api-key":env.GOOGLE_API_KEY,...options?.headers}});const data=await r.json().catch(()=>({error:{message:"Resposta inválida do provedor"}}));return {status:r.status,data}}
 const findVideo=obj=>{
   const content=obj?.steps?.filter(step=>step?.type==="model_output").flatMap(step=>step.content||[])||[];

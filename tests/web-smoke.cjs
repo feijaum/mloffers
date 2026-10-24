@@ -26,7 +26,7 @@ assert.equal(rows.length,1);assert.equal(rows[0].id,'MLB1234567890');assert.equa
 assert.equal(rows[0].discount,65);assert.equal(rows[0].rating,4.9);
 assert.ok(rows[0].image.includes('http2.mlstatic.com'));assert.equal(rows[0].pix,true);
 const product={...rows[0],affiliate:'https://www.mercadolivre.com.br/meu-link'};
-assert.match(t.makeFlow(product),/VEO/i);assert.match(t.makeFlow(product),/EU QUERO/);
+assert.match(t.makeFlow(product),/GOOGLE FLOW/i);assert.match(t.makeFlow(product),/NÃO adicionar nenhum texto/);assert.match(t.makeFlow(product),/EU QUERO/);
 assert.match(t.makeCaption(product),/Comente EU QUERO/);assert.match(t.makeCaption(product),/https:\/\/www.mercadolivre.com.br\/meu-link/);
 assert.doesNotMatch(t.makeCaption(product),/link na bio/i);
 assert.match(t.makeDM(product),/https:\/\/www.mercadolivre.com.br\/meu-link/);

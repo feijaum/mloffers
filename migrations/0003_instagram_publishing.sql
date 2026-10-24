@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS ig_connection (id INTEGER PRIMARY KEY CHECK(id=1), account_id TEXT NOT NULL, username TEXT NOT NULL, token TEXT NOT NULL, expires_at INTEGER);
+CREATE TABLE IF NOT EXISTS ig_uploads (id TEXT PRIMARY KEY, secret TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, chunks INTEGER NOT NULL DEFAULT 0, complete INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ig_upload_chunks (upload_id TEXT NOT NULL, part INTEGER NOT NULL, data BLOB NOT NULL, PRIMARY KEY(upload_id,part));
+CREATE TABLE IF NOT EXISTS ig_publications (id TEXT PRIMARY KEY, offer_id TEXT NOT NULL, caption TEXT NOT NULL, affiliate_url TEXT NOT NULL, keyword TEXT NOT NULL, dm TEXT NOT NULL, public_reply TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 0, container_id TEXT, media_id TEXT UNIQUE, status TEXT NOT NULL DEFAULT 'draft', error TEXT, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ig_rules (media_id TEXT PRIMARY KEY, dm TEXT NOT NULL, public_reply TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS ig_delivery (comment_id TEXT PRIMARY KEY, media_id TEXT NOT NULL, dm_status TEXT NOT NULL, reply_status TEXT NOT NULL DEFAULT 'disabled', error TEXT, created_at INTEGER NOT NULL);

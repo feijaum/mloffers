@@ -1,3 +1,4 @@
+import { loadCopy, saveCopy } from "./content-copy.js";
 // Estúdio Gemini Omni — as credenciais Google nunca entram neste JavaScript.
 const v=id=>document.getElementById(id);
 let offers=[],ranking=[],selected=null,authenticated=false;
@@ -38,19 +39,8 @@ function promptFor(x){return [
 "Áudio ambiente e música discretos. Se houver locução, português brasileiro sem subtítulos automáticos.",
 "Não alegue descontos, benefícios ou garantias não confirmados. Sem texto promocional gerado por IA."
 ].join("\n")}
-function overlayCategory(x){const t=((x.category||"")+" "+(x.title||"")).toLowerCase();if(/furadeira|parafusadeira|serra|lixadeira|ferrament|broca/.test(t))return "ferramentas";if(/fone|smartwatch|celular|notebook|gamer|mouse|teclado|bluetooth|tecnologia|eletr[oô]nic/.test(t))return "tecnologia";if(/cozinha|panela|air fryer|casa|organizador|limpeza|banheiro|aspirador/.test(t))return "casa";if(/perfume|maquiagem|skincare|beleza|moda|t[eê]nis|vestido|bolsa/.test(t))return "beleza";return "geral"}
-function buildOverlayCopy(x){
- const type=overlayCategory(x);
- const titles={ferramentas:"Achado útil",tecnologia:"Achadinho tech",casa:"Utilidade do dia",beleza:"Achadinho de hoje",geral:"Achadinho do dia"};
- const support={ferramentas:"Confira os detalhes",tecnologia:"Tecnologia para conferir",casa:"Ideia útil para casa",beleza:"Vale conhecer",geral:"Vale conferir"};
- const tags={ferramentas:"#ferramentas",tecnologia:"#tecnologia",casa:"#utilidadesdomesticas",beleza:"#beleza",geral:"#achados"};
- const subtitle=String(x.title||"Produto em destaque").replace(/\s+/g," ").trim();
- const short=subtitle.length>55?subtitle.slice(0,52).replace(/\s+\S*$/,"").trim()+"…":subtitle;
- const caption=["✨ "+titles[type]+"!","",x.title,"","💬 Gostou? Comente EU QUERO para receber o link por mensagem!","",x.affiliate?"🔗 Link: "+x.affiliate:"🔗 Consulte a oferta: "+(x.url||"link disponível por mensagem"),"","Publicidade / link de afiliado. Preço, frete e disponibilidade podem mudar."].join("\n");
- return {title:titles[type],subtitle:short,cta:"Comente EU QUERO",support:support[type],caption,hashtags:"#achadinhos #ofertas #mercadolivre "+tags[type]};
-}
 const overlayIds=["title","subtitle","cta","support","caption","hashtags"];
-function renderOverlayCopy(x){const data=x?buildOverlayCopy(x):{};for(const key of overlayIds){const field=v("overlay-"+key);if(field)field.value=data[key]||""}updateOverlayPreview()}
+function renderOverlayCopy(x){const data=x?loadCopy(x):{};for(const key of overlayIds){const field=v("overlay-"+key);if(field)field.value=data[key]||""}updateOverlayPreview()}
 function updateOverlayPreview(){for(const key of ["title","subtitle","cta"]){const e=v("overlay-preview-"+key);if(e)e.textContent=v("overlay-"+key)?.value||""}}
 function overlayPackage(){return overlayIds.map(k=>k.toUpperCase()+"\n"+(v("overlay-"+k)?.value||"")).join("\n\n")}
 function renderSelection(){selected=(ranking.length?ranking:offers).find(x=>x.id===v("video-product").value)||null;renderRankingCards();const box=v("video-product-preview");if(!selected){box.textContent="Selecione uma oferta para criar o vídeo.";v("video-prompt").value="";renderOverlayCopy(null);return}
@@ -121,7 +111,7 @@ v("video-flow-kit").onclick=()=>{
 };
 mode("flow");
 
-for(const key of overlayIds)v("overlay-"+key)?.addEventListener("input",updateOverlayPreview);
+for(const key of overlayIds)v("overlay-"+key)?.addEventListener("input",()=>{updateOverlayPreview();if(selected)saveCopy(selected.id,Object.fromEntries(overlayIds.map(k=>[k,v("overlay-"+k).value])))});
 document.querySelectorAll("[data-copy-overlay]").forEach(button=>button.addEventListener("click",async()=>{
  const key=button.dataset.copyOverlay;
  const value=key==="all"?overlayPackage():v("overlay-"+key)?.value||"";
@@ -129,3 +119,5 @@ document.querySelectorAll("[data-copy-overlay]").forEach(button=>button.addEvent
  try{await navigator.clipboard.writeText(value);status("Texto copiado com sucesso.")}catch{status("Falha ao copiar texto automaticamente.")}
 }));
 v("overlay-download").onclick=()=>{if(!selected){status("Selecione um produto.");return}downloadText("overlay-"+selected.id+".txt",overlayPackage());status("Overlays baixados.")};
+
+window.addEventListener("observatorio:copy",event=>{if(selected?.id!==event.detail.id)return;for(const key of overlayIds)v("overlay-"+key).value=event.detail.copy[key]||"";updateOverlayPreview()});
