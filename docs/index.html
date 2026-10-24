@@ -15,7 +15,7 @@
   <div class="brand"><span class="logo">↗</span><span><strong>OBSERVATÓRIO<span class="lime">ML</span></strong><small>Ofertas, vídeos e conversão</small></span></div>
   <div class="header-actions"><span class="chip">Versão Web · Cloudflare</span><a class="mini-link" href="https://github.com/feijaum/mloffers" target="_blank" rel="noreferrer">Código ↗</a></div>
 </header>
-<nav class="app-tabs" aria-label="Seções do Observatório"><button class="app-tab active" data-tab="ofertas" aria-selected="true">⌕ Ofertas</button><button class="app-tab" data-tab="conteudo" aria-selected="false">✦ Conteúdo</button><button class="app-tab" data-tab="instagram" aria-selected="false">◎ Instagram</button><button class="app-tab" data-tab="config" aria-selected="false">⚙ Configurações</button></nav>
+<nav class="app-tabs" aria-label="Seções do Observatório"><button class="app-tab active" data-tab="ofertas" aria-selected="true">⌕ Ofertas</button><button class="app-tab" data-tab="conteudo" aria-selected="false">✦ Conteúdo</button><button class="app-tab" data-tab="instagram" aria-selected="false">◎ Instagram</button><button class="app-tab" data-tab="threads" aria-selected="false">@ Threads</button><button class="app-tab" data-tab="config" aria-selected="false">⚙ Configurações</button></nav>
 <main class="layout">
 <div data-pane="ofertas"><section class="hero">
 <div><div class="eyebrow">INTELIGÊNCIA DE OFERTAS PARA AFILIADOS</div><h1>Do produto ao <em>vídeo que vende.</em></h1><p>Analise capturas de ofertas, descubra produtos promissores e monte seu pacote de divulgação com imagem, prompt para <b>Veo no Google Flow</b>, legenda e comentário <strong>EU QUERO</strong>.</p></div>
@@ -124,6 +124,20 @@
 <h3>Histórico</h3><div id="ig-history" class="fine"></div>
 </div><p id="ig-status" role="status" aria-live="polite" class="fine">Verificando disponibilidade…</p>
 </section></div>
+<div data-pane="threads" hidden><section class="panel">
+<div class="panel-head"><div><div class="eyebrow">ESTÚDIO DE HISTÓRIAS</div><h2>Threads</h2><p>Crie uma sequência, ajuste o texto e confira a publicação final.</p></div><span class="badge">Rascunho · publicação manual</span></div>
+<div class="studio-guide"><strong>Da oferta à história</strong><p>Selecione pelo ranking, informe seu link de afiliado e gere um modelo editável. Esta etapa usa modelos locais; a conexão e a publicação automática serão configuradas depois.</p></div>
+<div class="threads-layout"><div class="threads-form">
+<label>Produto · ordem do ranking<select id="th-offer"><option value="">Selecione uma oferta</option></select></label><p id="th-info">Importe ofertas na aba Ofertas para usar seus produtos.</p>
+<label>Nome curto do produto na história<input id="th-product" maxlength="90" placeholder="Ex.: fone sem fio"></label>
+<label>Link de afiliado<input id="th-link" type="url" placeholder="https://…"></label>
+<label>Enredo<select id="th-theme"><option value="presente">O presente misterioso</option><option value="vizinha">A encomenda da vizinha</option><option value="familia">O segredo no grupo da família</option></select></label>
+<label>Nome do perfil na prévia<input id="th-profile" maxlength="40" value="historias.eachados"></label>
+<div class="actions"><button id="th-generate" class="btn primary">Gerar história modelo</button><button id="th-copy" class="btn secondary">Copiar sequência</button></div>
+<p id="th-status" role="status" aria-live="polite">Escolha um produto para começar. Os rascunhos são salvos neste navegador.</p>
+<div id="th-editors"></div>
+</div><div><div class="eyebrow">PRÉVIA DA PUBLICAÇÃO FINAL</div><div id="th-preview" class="threads-preview"><p>A história aparecerá aqui em uma sequência de publicações.</p></div><p class="muted">Prévia ilustrativa, sem métricas simuladas. Nenhum conteúdo será publicado.</p></div></div>
+</section></div>
 <div data-pane="config" hidden><section class="panel"><div class="panel-head"><div><div class="eyebrow">PREFERÊNCIAS E ACESSO</div><h2>Configurações</h2><p>Confira o estado do painel e as integrações planejadas.</p></div></div><div class="settings-list"><div><strong>Armazenamento de ofertas</strong><span>Local neste navegador (IndexedDB)</span></div><div><strong>Automação do Instagram</strong><span>Publicação de Reels e respostas por comentário na aba Instagram</span></div><div><strong>Google Flow / Veo</strong><span>Backend seguro para Gemini/Veo em preparação; sem chave no navegador</span></div><div><strong>Login do painel</strong><span>Planejado — não ativado</span></div></div><div class="studio-guide"><strong>Prévia do acesso futuro</strong><p>Quando o backend de autenticação estiver pronto, este painel poderá exigir login. Por segurança, nenhum formulário de senha fictício será ativado agora.</p><button class="btn secondary" type="button" disabled>Login — em preparação</button></div></section></div>
 <div data-pane="ofertas"><section class="panel support">
 <div class="panel-head"><div><div class="eyebrow">PASSO 3 · PUBLICAÇÃO</div><h2>Como usar no celular</h2></div></div>
@@ -147,10 +161,11 @@
 </dialog>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <script>
-(function(){const tabs=[...document.querySelectorAll('[data-tab]')],panes=[...document.querySelectorAll('[data-pane]')];function show(name){if(!tabs.some(t=>t.dataset.tab===name))name='ofertas';tabs.forEach(t=>{const active=t.dataset.tab===name;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active))});panes.forEach(p=>p.hidden=p.dataset.pane!==name);history.replaceState(null,'','#'+name);window.scrollTo({top:0,behavior:'instant'});}tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.goto)));document.querySelectorAll('a[href="#importar"],a[href="#ranking"]').forEach(a=>a.addEventListener('click',()=>show('ofertas')));show(['ofertas','conteudo','instagram','config'].includes(location.hash.slice(1))?location.hash.slice(1):'ofertas');})();
+(function(){const tabs=[...document.querySelectorAll('[data-tab]')],panes=[...document.querySelectorAll('[data-pane]')];function show(name){if(!tabs.some(t=>t.dataset.tab===name))name='ofertas';tabs.forEach(t=>{const active=t.dataset.tab===name;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active))});panes.forEach(p=>p.hidden=p.dataset.pane!==name);history.replaceState(null,'','#'+name);window.scrollTo({top:0,behavior:'instant'});}tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.goto)));document.querySelectorAll('a[href="#importar"],a[href="#ranking"]').forEach(a=>a.addEventListener('click',()=>show('ofertas')));show(['ofertas','conteudo','instagram','threads','config'].includes(location.hash.slice(1))?location.hash.slice(1):'ofertas');})();
 </script>
 <script type="module" src="./app.js"></script>
 <script type="module" src="./video-studio.js"></script>
 <script type="module" src="./instagram-studio.js"></script>
+<script type="module" src="./threads-studio.js"></script>
 </body>
 </html>
