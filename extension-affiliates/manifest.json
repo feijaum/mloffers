@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Observatório ML — Links de Afiliado",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Associa links oficiais de afiliado aos 20 primeiros produtos do ranking Observatório ML, sob comando do usuário.",
   "permissions": [
     "tabs",
-    "storage"
+    "storage",
+    "downloads"
   ],
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
@@ -41,7 +42,8 @@
     }
   ],
   "action": {
-    "default_title": "Links de afiliado: use o botão no Observatório ML"
+    "default_title": "Links de afiliado: use o botão no Observatório ML",
+    "default_popup": "popup.html"
   },
   "minimum_chrome_version": "114"
 }
