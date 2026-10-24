@@ -1,30 +1,51 @@
 'use strict';
-// Nunca cria links a partir de URLs comuns: lê apenas o resultado do gerador oficial exibido na página.
-let sent='';
-const valid=s=>{try{const u=new URL(s);return u.protocol==='https:'&&(['meli.la','www.mercadolivre.com.br','mercadolivre.com.br'].includes(u.hostname));}catch{return false}};
-function candidate(){
- const elements=[...document.querySelectorAll('input,textarea')];
- const dialog=[...document.querySelectorAll('[role="dialog"],[aria-modal="true"]')];
- const scope=dialog.length?dialog[dialog.length-1]:document;
- const text=scope.innerText||'';
- if(!/Gerar link\s*\/\s*ID de produto|Link do produto/i.test(text))return '';
- // Exclui links convencionais de navegação e o texto sugerido, priorizando o campo "Link do produto".
- const fields=elements.filter(e=>scope.contains(e)&&e.getBoundingClientRect().width>0);
- const values=fields.map(e=>(e.value||'').trim());
- return values.find(v=>/^https:\/\/meli\.la\/[a-zA-Z0-9_-]+\/?$/.test(v))||'';
+// Usa somente o gerador oficial visível no DOM; não acessa APIs internas.
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const visible=el=>!!el&&el.getClientRects().length>0;
+let busy=false,completed=false,attempted=false;
+function officialModal(){return [...document.querySelectorAll('[data-testid="popper"],.link-generator,[role="dialog"]')].find(el=>visible(el)&&/Gerar link\s*\/\s*ID de produto/i.test(el.innerText||''));}
+function linkFromModal(){
+ const modal=officialModal();if(!modal)return '';
+ const field=modal.querySelector('[data-testid="text-field__label_link"]');
+ const value=(field?.value||field?.textContent||'').trim();
+ return /^https:\/\/meli\.la\/[\w-]+\/?(?:\?.*)?$/i.test(value)?value:'';
 }
-let submitting=false;
-async function inspect(){
- if(submitting)return;
- const url=candidate();if(!url||url===sent||!valid(url))return;
- submitting=true;
+function sharingButton(){
+ const el=document.querySelector('button[data-testid="generate_link_button"]');
+ return visible(el)?el:null;
+}
+async function run(){
+ if(busy||completed)return;busy=true;
  try{
-  const r=await chrome.runtime.sendMessage({type:'OML_CAPTURE',affiliate:url});
-  if(r?.ok)sent=url;
-  else if(r?.error&&!document.getElementById('oml-link-warning')){
-   const warn=document.createElement('div');warn.id='oml-link-warning';warn.textContent='Observatório ML: '+r.error;
-   Object.assign(warn.style,{position:'fixed',top:'16px',right:'16px',zIndex:2147483647,background:'#fff3cd',color:'#222',padding:'12px',borderRadius:'8px',maxWidth:'360px'});document.body.append(warn);
+  const status=await chrome.runtime.sendMessage({type:'OML_STATUS'});
+  const batch=status?.batch;
+  if(batch?.status!=='running'||!batch.items?.[batch.index])return;
+  const current=batch.items[batch.index];
+  // Confere URL do anúncio carregado antes de atribuir o link ao item.
+  let u;try{u=new URL(location.href)}catch{return}
+  const expected=new URL(current.url);
+  const sameId=location.href.replace(/[-]/g,'').includes(current.id);
+  if(u.hostname!==expected.hostname||(!sameId&&u.pathname!==expected.pathname))return;
+  let modal=officialModal();
+  if(!modal){
+   const button=sharingButton();
+   if(!button||attempted)return;
+   attempted=true;
+   button.click();
+   await pause(1100);
+   modal=officialModal();
   }
- }catch{}finally{submitting=false}
+  if(!modal)return;
+  const link=linkFromModal();
+  if(!link)return;
+  const result=await chrome.runtime.sendMessage({type:'OML_CAPTURE',affiliate:link});
+  if(result?.ok){completed=true;return}
+  if(result?.error&&!document.getElementById('oml-auto-warning')){
+   const div=document.createElement('div');div.id='oml-auto-warning';div.textContent='Observatório ML: '+result.error;
+   Object.assign(div.style,{position:'fixed',right:'12px',top:'12px',zIndex:2147483647,background:'#fff4ce',color:'#222',padding:'12px',borderRadius:'8px'});
+   document.body.append(div);
+  }
+ }catch(e){console.warn('Observatório ML: compartilhamento',e)}
+ finally{busy=false}
 }
-setInterval(inspect,1200);
+setInterval(run,1200);
