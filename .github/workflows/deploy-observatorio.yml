@@ -60,8 +60,20 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4 d1 execute observatorio-ml-db --remote --config wrangler.jsonc --file migrations/0003_instagram_publishing.sql
+      - name: Apply Instagram diagnostics schema
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 d1 execute observatorio-ml-db --remote --config wrangler.jsonc --file migrations/0004_instagram_diagnostics.sql
       - name: Deploy Observatório ML
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4 deploy --config wrangler.jsonc
+      - name: Check comment automation aggregates
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          npx --yes wrangler@4 d1 execute observatorio-ml-db --remote --config wrangler.jsonc
+          --command "SELECT 'webhook_events' AS metric,COUNT(*) AS total FROM instagram_webhook_events UNION ALL SELECT 'active_rules',COUNT(*) FROM instagram_posts WHERE active=1 UNION ALL SELECT 'inactive_rules',COUNT(*) FROM instagram_posts WHERE active=0 UNION ALL SELECT 'delivery_' || dm_status,COUNT(*) FROM ig_delivery GROUP BY dm_status;"

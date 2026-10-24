@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS ig_diagnostics (id TEXT PRIMARY KEY, status TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL);

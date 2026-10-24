@@ -100,7 +100,7 @@
 </div>
 </div></section></div>
 <div data-pane="instagram" hidden><section class="panel">
-<div class="panel-head"><div><div class="eyebrow">PUBLICAÇÃO E COMENTÁRIOS</div><h2>Instagram</h2><p>Selecione a oferta, envie o vídeo do Google Flow ou do estúdio e prepare seu Reel com os textos de Conteúdo.</p></div><span id="ig-account-state" class="mini-badge">Verificando conexão…</span></div>
+<div class="panel-head"><div><div class="eyebrow">PUBLICAÇÃO E COMENTÁRIOS</div><h2>Instagram</h2><p>Selecione a oferta, envie o vídeo do Google Flow ou do estúdio e publique seu Reel com a legenda de Conteúdo.</p></div><span id="ig-account-state" class="mini-badge">Verificando conexão…</span></div>
 <div id="ig-login-box"><label class="field"><span>Senha do painel</span><input id="ig-password" type="password" autocomplete="current-password"></label><button id="ig-login" class="btn primary">Entrar</button><p class="fine">Use a mesma senha do Estúdio de Vídeos.</p></div>
 <div id="ig-panel" hidden>
 <div class="hero-buttons"><button id="ig-connect" class="btn primary">Conectar Instagram</button><button id="ig-sync" class="btn secondary">Ativar recebimento de comentários</button><button id="ig-reload" class="btn secondary">Atualizar publicações</button><button id="ig-pause" class="btn secondary">Pausar todas as automações</button></div>
@@ -109,19 +109,17 @@
 <label class="field"><span>Oferta (mesma ordem do ranking)</span><select id="ig-offer"><option value="">Selecione uma oferta</option></select></label>
 <div id="ig-offer-info" class="fine"></div>
 <label class="field"><span>Vídeo MP4 (até 40 MB)</span><input id="ig-video" type="file" accept="video/mp4,.mp4"></label>
-<label class="field"><span><input id="ig-burn" type="checkbox" checked> Incorporar título, subtítulo e CTA ao vídeo</span></label>
-<p class="fine">A edição acontece no seu navegador. Mantenha a aba aberta até terminar. Desmarque se o vídeo já estiver editado. Para editar, use Chrome ou Edge com suporte a gravação MP4.</p>
-<button id="ig-reuse" class="btn secondary small">Reaproveitar textos da aba Conteúdo</button>
-<div class="overlay-grid"><label class="field"><span>Título da capa</span><input id="ig-title" maxlength="70"></label><label class="field"><span>Subtítulo</span><textarea id="ig-subtitle" rows="2"></textarea></label><label class="field"><span>CTA</span><input id="ig-cta" maxlength="70"></label><label class="field"><span>Texto de apoio</span><input id="ig-support" maxlength="80"></label></div>
+<p class="fine">O vídeo será publicado como você enviou. Faça a edição dos textos e banners no seu editor antes de enviar.</p>
+<button id="ig-reuse" class="btn secondary small">Reaproveitar legenda de Conteúdo</button>
 <label class="field"><span>Legenda</span><textarea id="ig-caption" rows="6" maxlength="2200"></textarea></label><label class="field"><span>Hashtags</span><textarea id="ig-hashtags" rows="2"></textarea></label>
 <label class="field"><span>Link de afiliado desta oferta</span><input id="ig-affiliate" type="url" placeholder="https://..."></label>
 <h3>Resposta ao comentário</h3>
-<label class="field"><span><input id="ig-active" type="checkbox"> Ativar automação nesta publicação</span></label>
-<label class="field"><span>Palavra-chave</span><input id="ig-keyword" value="EU QUERO" maxlength="80"></label>
+<label class="field"><span><input id="ig-active" type="checkbox" checked> Responder automaticamente aos comentários desta publicação</span></label>
+<label class="field"><span>Palavra-chave</span><input id="ig-keyword" value="EU QUERO" maxlength="80"><small class="fine">EU QUERO, eu quero e Eu Quero acionam a mesma regra.</small></label>
 <label class="field"><span>Mensagem privada ({link} será substituído pelo link da oferta)</span><textarea id="ig-dm" rows="3" maxlength="900">Aqui está o link da oferta que você pediu 😊 {link}</textarea></label>
 <label class="field"><span>Resposta pública após envio da DM (opcional)</span><input id="ig-public-reply" value="Te enviei o link por mensagem 😊" maxlength="300"></label>
-<div class="hero-buttons"><button id="ig-prepare" class="btn primary">Preparar vídeo e capa</button><button id="ig-publish" class="btn primary" disabled>Publicar Reel</button></div>
-</div><div><canvas id="ig-cover" width="1080" height="1920" class="ig-cover" aria-label="Prévia da capa do Reel"></canvas><p class="fine">Capa vertical 9:16. Textos dentro da área central para melhor leitura nos recortes do Instagram.</p><video id="ig-preview" controls playsinline class="ig-video" hidden></video><button id="ig-download-cover" class="btn secondary small">Baixar capa JPEG</button></div></div>
+<div class="hero-buttons"><button id="ig-prepare" class="btn primary">Preparar vídeo</button><button id="ig-publish" class="btn primary" disabled>Publicar Reel</button></div>
+</div><div><video id="ig-preview" controls playsinline class="ig-video" hidden></video><p class="fine">Prévia do vídeo original enviado.</p></div></div>
 <h3>Publicações e automações</h3><p class="fine">Escolha uma publicação existente para associar a oferta e salvar a regra configurada acima.</p><div id="ig-posts"></div>
 <h3>Histórico</h3><div id="ig-history" class="fine"></div>
 </div><p id="ig-status" role="status" aria-live="polite" class="fine">Verificando disponibilidade…</p>

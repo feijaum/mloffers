@@ -12,7 +12,7 @@ export async function graph(path,token,body){
  const url=new URL('https://graph.instagram.com/'+path);
  const response=await fetch(url,{method:body?'POST':'GET',headers:{authorization:'Bearer '+token,...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
  const data=await response.json().catch(()=>({}));
- if(!response.ok||data.error)throw fail(data.error?.message||'Falha na API do Instagram (HTTP '+response.status+')',502);
+ if(!response.ok||data.error)throw fail((data.error?.message||'Falha na API do Instagram (HTTP '+response.status+')')+(data.error?.code?' [Meta '+data.error.code+(data.error.error_subcode?'/'+data.error.error_subcode:'')+']':''),502);
  return data;
 }
 async function cryptKey(env){if(!env.VIDEO_SESSION_SECRET)throw fail('Configure VIDEO_SESSION_SECRET',503);return crypto.subtle.importKey('raw',await crypto.subtle.digest('SHA-256',enc.encode(env.VIDEO_SESSION_SECRET)),'AES-GCM',false,['encrypt','decrypt'])}
@@ -23,7 +23,7 @@ async function unseal(value,env){const [iv,data]=value.split('.');return new Tex
 async function connection(env){
  const c=await env.DB.prepare('SELECT * FROM ig_connection WHERE id=1').first();
  if(c){if(c.expires_at&&c.expires_at<Date.now())throw fail('A conexão expirou. Reconecte o Instagram.',401);return {...c,accessToken:await unseal(c.token,env)}}
- if(env.INSTAGRAM_ACCESS_TOKEN){const p=await graph('me?fields=user_id,id,username',env.INSTAGRAM_ACCESS_TOKEN);return {account_id:p.user_id||p.id,username:p.username,accessToken:env.INSTAGRAM_ACCESS_TOKEN}}
+ if(env.INSTAGRAM_ACCESS_TOKEN){const p=await graph('me?fields=user_id,id,username',env.INSTAGRAM_ACCESS_TOKEN);return {account_id:String(p.user_id||p.id),username:p.username,accessToken:env.INSTAGRAM_ACCESS_TOKEN}}
  throw fail('Conecte sua conta profissional do Instagram.',409);
 }
 async function remember(token,expires,env){const p=await graph('me?fields=user_id,id,username',token);const id=String(p.user_id||p.id||'');if(!validId(id))throw fail('A Meta não retornou a conta profissional.',502);await env.DB.prepare('INSERT OR REPLACE INTO ig_connection (id,account_id,username,token,expires_at) VALUES (1,?1,?2,?3,?4)').bind(id,p.username||'',await seal(token,env),Date.now()+Number(expires||5184000)*1000).run();return id}
@@ -75,7 +75,7 @@ export async function instagramApi(request,env,url){try{
   return json({connected:true,account:{id:c.account_id,username:c.username},webhookConfigured:Boolean(env.META_APP_SECRET&&env.INSTAGRAM_VERIFY_TOKEN),callback:url.origin+'/api/instagram/callback',webhook:url.origin+'/api/instagram/webhook'});
  }
  if(path==='/api/instagram/upload'&&method==='POST'){
-  await cleanup(env);const b=await request.json();if(!['video/mp4','image/jpeg'].includes(b.mime)||!Number.isInteger(b.size)||b.size<1||b.size>(b.mime==='image/jpeg'?5:40)*1024*1024)throw fail('Envie MP4 até 40 MB ou capa JPEG até 5 MB.');
+  await cleanup(env);const b=await request.json();if(b.mime!=='video/mp4'||!Number.isInteger(b.size)||b.size<1||b.size>40*1024*1024)throw fail('Envie um vídeo MP4 até 40 MB.');
   const total=await env.DB.prepare('SELECT COALESCE(SUM(size),0) AS total FROM ig_uploads').first();if(total.total+b.size>160*1024*1024)throw fail('Armazenamento temporário cheio. Aguarde a expiração dos arquivos (24h).',429);
   const id=crypto.randomUUID();await env.DB.prepare('INSERT INTO ig_uploads (id,secret,mime,size,created_at) VALUES (?1,?2,?3,?4,?5)').bind(id,crypto.randomUUID()+crypto.randomUUID(),b.mime,b.size,Date.now()).run();return json({id});
  }
@@ -84,8 +84,11 @@ export async function instagramApi(request,env,url){try{
   const row=await env.DB.prepare('SELECT * FROM ig_uploads WHERE id=?1 AND complete=0').bind(upload[1]).first();if(!row)throw fail('Upload indisponível.');const part=Number(upload[2]);if(part!==row.chunks)throw fail('Sequência de upload inválida.');const bytes=await request.arrayBuffer();const expected=Math.min(1048576,row.size-part*1048576);if(expected<=0||bytes.byteLength!==expected)throw fail('Tamanho de bloco inválido.');
   await env.DB.batch([env.DB.prepare('INSERT INTO ig_upload_chunks (upload_id,part,data) VALUES (?1,?2,?3)').bind(row.id,part,bytes),env.DB.prepare('UPDATE ig_uploads SET chunks=chunks+1,complete=?1 WHERE id=?2').bind((part+1)*1048576>=row.size?1:0,row.id)]);return json({complete:(part+1)*1048576>=row.size});
  }
+ if(path==='/api/instagram/history'&&method==='GET'){
+  const publications=await env.DB.prepare('SELECT id,offer_id,status,media_id,error,created_at FROM ig_publications ORDER BY created_at DESC LIMIT 20').all();const actions=await env.DB.prepare('SELECT * FROM ig_delivery ORDER BY created_at DESC LIMIT 30').all();const diagnostics=await env.DB.prepare('SELECT id,status,detail,updated_at FROM ig_diagnostics ORDER BY updated_at DESC LIMIT 20').all();const webhook=await env.DB.prepare('SELECT COUNT(*) AS received,MAX(received_at) AS last_received FROM instagram_webhook_events').first();const rules=await env.DB.prepare('SELECT COUNT(*) AS total,COALESCE(SUM(active),0) AS active FROM instagram_posts').first();return json({publications:publications.results,actions:actions.results,diagnostics:diagnostics.results,webhook,rules});
+ }
  const c=await connection(env);
- if(path==='/api/instagram/sync'&&method==='POST'){const sub=await graph(c.account_id+'/subscribed_apps',c.accessToken,{subscribed_fields:'comments'});if(!sub.success)throw fail('A Meta não confirmou a assinatura de comentários.',502);return json({success:true})}
+ if(path==='/api/instagram/sync'&&method==='POST'){await ensureSubscription(env,c);return json({success:true})}
  if(path==='/api/instagram/posts'&&method==='GET'){
   const remote=await graph(c.account_id+'/media?fields=id,caption,permalink,thumbnail_url,media_type&limit=30',c.accessToken);
   const rules=await env.DB.prepare('SELECT p.*,r.dm,r.public_reply FROM instagram_posts p LEFT JOIN ig_rules r ON p.media_id=r.media_id').all();return json({posts:(remote.data||[]).map(p=>({...p,rule:rules.results.find(r=>r.media_id===p.id)||null}))});
@@ -93,19 +96,15 @@ export async function instagramApi(request,env,url){try{
  if(path==='/api/instagram/rule'&&method==='POST'){
   const b=await request.json();if(!validId(b.mediaId)||!validLink(b.affiliate)||!text(b.keyword,80)||!text(b.dm,900))throw fail('Preencha publicação, link HTTPS, palavra-chave e mensagem.');
   const media=await graph(b.mediaId+'?fields=id,owner',c.accessToken);if(String(media.owner?.id||media.owner)!==String(c.account_id))throw fail('Esta publicação não pertence à conta conectada.',403);
-  await saveRule(env,b.mediaId,b);return json({success:true});
+  const warning=await saveRule(env,b.mediaId,b,c);return json({success:true,warning});
  }
  if(path==='/api/instagram/pause'&&method==='POST'){await env.DB.prepare('UPDATE instagram_posts SET active=0').run();return json({success:true})}
- if(path==='/api/instagram/history'&&method==='GET'){
-  const publications=await env.DB.prepare('SELECT id,offer_id,status,media_id,error,created_at FROM ig_publications ORDER BY created_at DESC LIMIT 20').all();const actions=await env.DB.prepare('SELECT * FROM ig_delivery ORDER BY created_at DESC LIMIT 30').all();return json({publications:publications.results,actions:actions.results});
- }
  if(path==='/api/instagram/prepare'&&method==='POST'){
   const b=await request.json();if(!text(b.offerId,40)||!text(b.caption,2200)||String(b.caption).length>2200||!validLink(b.affiliate)||!text(b.keyword,80)||!text(b.dm,900))throw fail('Confira oferta, legenda (até 2.200 caracteres), link HTTPS e automação.');
   const video=await env.DB.prepare('SELECT * FROM ig_uploads WHERE id=?1 AND complete=1 AND mime=?2 AND created_at>?3').bind(b.videoId,'video/mp4',Date.now()-86400000).first();if(!video)throw fail('Envie o vídeo novamente.');
-  let cover=null;if(b.coverId){cover=await env.DB.prepare('SELECT * FROM ig_uploads WHERE id=?1 AND complete=1 AND mime=?2').bind(b.coverId,'image/jpeg').first();if(!cover)throw fail('Capa indisponível.');}
   const id=crypto.randomUUID();await env.DB.prepare('INSERT INTO ig_publications (id,offer_id,caption,affiliate_url,keyword,dm,public_reply,active,status,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,\'preparing\',?9)').bind(id,text(b.offerId,40),b.caption,b.affiliate,text(b.keyword,80),text(b.dm,900),text(b.publicReply,300),b.active===true?1:0,Date.now()).run();
   const mediaUrl=r=>url.origin+'/api/instagram/media/'+r.id+'?key='+r.secret;
-  try{const container=await graph(c.account_id+'/media',c.accessToken,{media_type:'REELS',video_url:mediaUrl(video),caption:b.caption,share_to_feed:true,...(cover?{cover_url:mediaUrl(cover)}:{})});if(!validId(container.id))throw Error('Container inválido');await env.DB.prepare('UPDATE ig_publications SET container_id=?1,status=\'processing\' WHERE id=?2').bind(container.id,id).run();return json({id,status:'processing'});}catch(e){await env.DB.prepare('UPDATE ig_publications SET status=\'failed\',error=?1 WHERE id=?2').bind(e.message,id).run();throw e}
+  try{const container=await graph(c.account_id+'/media',c.accessToken,{media_type:'REELS',video_url:mediaUrl(video),caption:b.caption,share_to_feed:true});if(!validId(container.id))throw Error('Container inválido');await env.DB.prepare('UPDATE ig_publications SET container_id=?1,status=\'processing\' WHERE id=?2').bind(container.id,id).run();return json({id,status:'processing'});}catch(e){await env.DB.prepare('UPDATE ig_publications SET status=\'failed\',error=?1 WHERE id=?2').bind(e.message,id).run();throw e}
  }
  const job=path.match(/^\/api\/instagram\/publication\/([a-f0-9-]{36})$/);
  if(job){const p=await env.DB.prepare('SELECT * FROM ig_publications WHERE id=?1').bind(job[1]).first();if(!p)throw fail('Publicação não encontrada.',404);
@@ -116,21 +115,46 @@ export async function instagramApi(request,env,url){try{
    let result;try{result=await graph(c.account_id+'/media_publish',c.accessToken,{creation_id:p.container_id});if(!validId(result.id))throw Error('Resposta de publicação sem ID.')}catch(e){await env.DB.prepare('UPDATE ig_publications SET status=\'check_required\',error=?1 WHERE id=?2').bind('Confira no Instagram antes de tentar novamente: '+e.message,p.id).run();throw e}
    // Save the remote ID before any rule write so failures can never cause a duplicate publish.
    await env.DB.prepare('UPDATE ig_publications SET media_id=?1,status=\'published\' WHERE id=?2').bind(result.id,p.id).run();
-   try{await saveRule(env,result.id,{caption:p.caption,affiliate:p.affiliate_url,keyword:p.keyword,dm:p.dm,publicReply:p.public_reply,active:!!p.active})}catch{ return json({mediaId:result.id,status:'published',warning:'Reel publicado. Vincule a automação na lista de publicações.'}) }
-   return json({mediaId:result.id,status:'published'});
+   let warning;try{warning=await saveRule(env,result.id,{caption:p.caption,affiliate:p.affiliate_url,keyword:p.keyword,dm:p.dm,publicReply:p.public_reply,active:!!p.active},c)}catch{ return json({mediaId:result.id,status:'published',warning:'Reel publicado. Vincule a automação na lista de publicações.'}) }
+   return json({mediaId:result.id,status:'published',warning});
   }
  }
  return json({error:'Rota Instagram não encontrada'},404);
  }catch(e){return json({error:e.message||'Falha na integração Instagram'},e.status||500)}}
-async function saveRule(env,id,b){await env.DB.batch([env.DB.prepare('INSERT INTO instagram_posts (media_id,caption,affiliate_url,keyword,active) VALUES (?1,?2,?3,?4,?5) ON CONFLICT(media_id) DO UPDATE SET caption=excluded.caption,affiliate_url=excluded.affiliate_url,keyword=excluded.keyword,active=excluded.active').bind(id,text(b.caption,2200),b.affiliate,text(b.keyword,80),b.active===true?1:0),env.DB.prepare('INSERT OR REPLACE INTO ig_rules (media_id,dm,public_reply) VALUES (?1,?2,?3)').bind(id,text(b.dm,900),text(b.publicReply,300))])}
+async function saveRule(env,id,b,c){await env.DB.batch([env.DB.prepare('INSERT INTO instagram_posts (media_id,caption,affiliate_url,keyword,active) VALUES (?1,?2,?3,?4,?5) ON CONFLICT(media_id) DO UPDATE SET caption=excluded.caption,affiliate_url=excluded.affiliate_url,keyword=excluded.keyword,active=excluded.active').bind(id,text(b.caption,2200),b.affiliate,text(b.keyword,80),b.active===true?1:0),env.DB.prepare('INSERT OR REPLACE INTO ig_rules (media_id,dm,public_reply) VALUES (?1,?2,?3)').bind(id,text(b.dm,900),text(b.publicReply,300))]);if(b.active===true){try{await ensureSubscription(env,c)}catch(e){return 'Regra salva, mas a Meta não ativou o recebimento: '+e.message}}return null;}
+export async function diagnostic(env,id,status,detail=''){
+ await env.DB.prepare('INSERT INTO ig_diagnostics (id,status,detail,updated_at) VALUES (?1,?2,?3,?4) ON CONFLICT(id) DO UPDATE SET status=excluded.status,detail=excluded.detail,updated_at=excluded.updated_at').bind(id,status,String(detail).slice(0,500),Date.now()).run();
+}
+async function ensureSubscription(env,c){
+ try{const sub=await graph(c.account_id+'/subscribed_apps',c.accessToken,{subscribed_fields:'comments,messages'});if(!sub.success)throw Error('A Meta não confirmou a assinatura.');await diagnostic(env,'subscription','subscribed','Recebimento de comentários ativado.');return sub}
+ catch(e){await diagnostic(env,'subscription','subscription_failed',e.message);throw e}
+}
 export async function processComments(payload,env){
- let c;try{c=await connection(env)}catch{return}
- for(const entry of payload.entry||[]){if(String(entry.id)!==String(c.account_id))continue;
- for(const change of entry.changes||[]){if(change.field!=='comments')continue;const v=change.value,id=String(v?.id||''),media=String(v?.media?.id||'');if(!validId(id)||!validId(media)||String(v.from?.id)===String(c.account_id))continue;
- const rule=await env.DB.prepare('SELECT p.*,r.dm,r.public_reply FROM instagram_posts p JOIN ig_rules r ON p.media_id=r.media_id WHERE p.media_id=?1 AND p.active=1').bind(media).first();if(!rule||!validLink(rule.affiliate_url)||!matchesKeyword(v.text,rule.keyword))continue;
+ let c;try{c=await connection(env)}catch(e){await diagnostic(env,'connection','connection_failed',e.message);throw e}
+ for(const entry of payload.entry||[]){
+ for(const change of entry.changes||[]){
+ if(change?.field!=='comments')continue;
+ const v=change.value,id=String(v?.id||''),media=String(v?.media?.id||'');
+ if(!validId(id)||!validId(media)||typeof v?.text!=='string'){await diagnostic(env,'payload','invalid_comment_payload','Comentário sem ID, publicação ou texto.');continue}
+ const rule=await env.DB.prepare('SELECT p.*,r.dm,r.public_reply FROM instagram_posts p LEFT JOIN ig_rules r ON p.media_id=r.media_id WHERE p.media_id=?1').bind(media).first();
+ if(!rule){await diagnostic(env,id,'rule_not_found','Não há regra vinculada à publicação '+media+'.');continue}
+ if(!rule.active){await diagnostic(env,id,'rule_paused','A automação desta publicação está desativada.');continue}
+ if(!rule.dm||!validLink(rule.affiliate_url)){await diagnostic(env,id,'rule_incomplete','Preencha a mensagem e o link de afiliado.');continue}
+ // Some Meta events use a different account identifier. Verify media ownership
+ // instead of silently discarding a legitimate comment or trusting another account.
+ if(String(entry.id)!==String(c.account_id)){
+  try{const [m,p]=await Promise.all([graph(media+'?fields=id,owner',c.accessToken),graph('me?fields=id,user_id,username',c.accessToken)]);const owner=String(m.owner?.id||m.owner||'');const ownIds=[c.account_id,p.id,p.user_id].filter(Boolean).map(String);if(!ownIds.includes(owner))throw Error('Publicação não pertence à conta conectada.');}
+  catch(e){await diagnostic(env,id,'account_mismatch',e.message);continue}
+ }
+ if(!matchesKeyword(v.text,rule.keyword)){await diagnostic(env,id,'keyword_not_matched','O comentário não contém a palavra-chave configurada.');continue}
  const claimed=await env.DB.prepare('INSERT OR IGNORE INTO ig_delivery (comment_id,media_id,dm_status,created_at) VALUES (?1,?2,\'sending\',?3)').bind(id,media,Date.now()).run();if(!claimed.meta.changes)continue;
- // An ambiguous network failure is left for review; never resend a private reply automatically.
- try{const message=rule.dm.replaceAll('{link}',rule.affiliate_url);await graph(c.account_id+'/messages',c.accessToken,{recipient:{comment_id:id},message:{text:message}});await env.DB.prepare('UPDATE ig_delivery SET dm_status=\'sent\' WHERE comment_id=?1').bind(id).run()}catch(e){await env.DB.prepare('UPDATE ig_delivery SET dm_status=\'check_required\',error=?1 WHERE comment_id=?2').bind(e.message,id).run();continue}
- if(rule.public_reply){try{await graph(id+'/replies',c.accessToken,{message:rule.public_reply});await env.DB.prepare('UPDATE ig_delivery SET reply_status=\'sent\' WHERE comment_id=?1').bind(id).run()}catch(e){await env.DB.prepare('UPDATE ig_delivery SET reply_status=\'failed\',error=?1 WHERE comment_id=?2').bind(e.message,id).run()}}
+ try{
+  const message=rule.dm.replaceAll('{link}',rule.affiliate_url);
+  await graph(c.account_id+'/messages',c.accessToken,{recipient:{comment_id:id},message:{text:message}});
+  await env.DB.prepare('UPDATE ig_delivery SET dm_status=\'sent\' WHERE comment_id=?1').bind(id).run();await diagnostic(env,id,'message_sent','Resposta privada aceita pela API do Instagram.');
+ }catch(e){await env.DB.prepare('UPDATE ig_delivery SET dm_status=\'check_required\',error=?1 WHERE comment_id=?2').bind(e.message,id).run();await diagnostic(env,id,'message_send_failed',e.message);continue}
+ if(rule.public_reply){try{await graph(id+'/replies',c.accessToken,{message:rule.public_reply});await env.DB.prepare('UPDATE ig_delivery SET reply_status=\'sent\' WHERE comment_id=?1').bind(id).run()}catch(e){await env.DB.prepare('UPDATE ig_delivery SET reply_status=\'failed\',error=?1 WHERE comment_id=?2').bind(e.message,id).run();await diagnostic(env,id,'public_reply_failed',e.message)}}
  }}
+ // Keep diagnostics bounded without keeping commenters' names or message text.
+ await env.DB.prepare('DELETE FROM ig_diagnostics WHERE id NOT IN (SELECT id FROM ig_diagnostics ORDER BY updated_at DESC LIMIT 100)').run();
 }

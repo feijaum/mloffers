@@ -1,6 +1,5 @@
-import { instagramApi, processComments } from "./instagram.js";
+import { instagramApi, processComments, diagnostic } from "./instagram.js";
 import { videoApi } from "./video.js";
-import { registerEligibleComments } from "./comment-matcher.js";
 // Observatório ML: assets públicos e recebimento autenticado de webhooks Instagram.
 // Publicações e automações exigem sessão administrativa e ativação explícita da regra.
 const encoder=new TextEncoder();
@@ -34,7 +33,7 @@ export default {
      .bind(key,"instagram",JSON.stringify(data)).run();
    }catch(error){console.error("Instagram webhook persistence unavailable",String(error).slice(0,180));return json({error:"Falha ao registrar evento"},503)}
    // Eventos já gravados podem ser reenviados; o matcher usa comment_id como chave única.
-   try{await registerEligibleComments(data,env.DB);await processComments(data,env)}
+   try{await diagnostic(env,'webhook','webhook_received','Evento Instagram autenticado.');await processComments(data,env);await env.DB.prepare("UPDATE instagram_webhook_events SET status='processed',processed_at=datetime('now') WHERE event_hash=?1").bind(key).run()}
    catch(error){console.error("Instagram comment classification failed",String(error).slice(0,180));return json({error:"Falha na classificação; o evento foi armazenado para recuperação"},503)}
    return new Response("EVENT_RECEIVED",{status:200,headers:{"content-type":"text/plain; charset=utf-8","cache-control":"no-store"}});
   }

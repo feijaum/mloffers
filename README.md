@@ -31,7 +31,7 @@ O projeto foi pensado para quem trabalha com **marketing de afiliados**, produç
 | **Ranking inteligente** | Notas de prioridade, sinais de conversão e potencial de conteúdo com base nos dados presentes nas capturas. |
 | **Painel web responsivo** | Consulta ao ranking pelo computador ou celular, com busca, filtros e armazenamento local dos produtos importados. |
 | **Conteúdo para Veo** | Prompts prontos para produzir vídeos promocionais no **Google Flow**, com instruções para selecionar um modelo **Veo**. |
-| **Publicações para Instagram** | Upload de MP4, capa vertical, aplicação de overlays no navegador, legenda reutilizada de Conteúdo e publicação de Reels pela API oficial. |
+| **Publicações para Instagram** | Upload do MP4 original, legenda reutilizada de Conteúdo e publicação de Reels pela API oficial, com automação por palavra-chave e diagnóstico de comentários. |
 | **Importação e exportação** | Arquivos **HTML, CSV e JSON**, backup local e possibilidade de publicar uma seleção no GitHub para acesso em outros dispositivos. |
 
 > **Importante:** o ranking apresenta **estimativas editoriais**, e não probabilidades comprovadas de venda. Os preços são referentes às capturas; confirme preço, estoque, frete, cupom e disponibilidade antes de divulgar.

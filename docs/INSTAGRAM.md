@@ -19,12 +19,12 @@ Na aba Instagram, entre com a senha do estúdio, informe o ID público do app In
 ## Publicar
 
 1. Selecione uma oferta na ordem do ranking. Os textos editados em Conteúdo são reaproveitados por ID do produto, neste navegador.
-2. Envie um MP4 de até 40 MB. O painel pode incorporar título, subtítulo, apoio e CTA via canvas + MediaRecorder MP4, preservando a trilha de áudio. A edição leva aproximadamente a duração do vídeo, limitada a 3 minutos; mantenha a aba ativa. Caso o navegador não ofereça MP4, envie um arquivo previamente editado e desmarque a incorporação.
-3. Confira a capa 1080×1920, legenda + hashtags (até 2.200 caracteres) e link de afiliado.
-4. Marque a automação, confira a palavra-chave, DM com `{link}` e resposta pública opcional.
+2. Envie um MP4 de até 40 MB. O painel envia o arquivo original, sem gravar textos, banners ou capas sobre ele. Faça a edição no seu editor antes do upload.
+3. Confira legenda + hashtags (até 2.200 caracteres) e link de afiliado.
+4. Confira a automação, palavra-chave, DM com `{link}` e resposta pública opcional. A resposta vem marcada para novas publicações; desmarque para publicar sem automação.
 5. Prepare e aguarde o processamento. Clique em **Publicar Reel** para publicar e associar a regra ao ID retornado pela Meta.
 
-Arquivos temporários ficam no D1 em blocos de 1 MB, acessíveis à Meta por URLs com chave aleatória, por até 24 horas. A limpeza física acontece no próximo upload; limite total de 160 MB. Esse fluxo usa `video_url` e `cover_url`, compatível com Instagram Login, sem depender de upload resumível exclusivo do Facebook Login. O vídeo precisa atender aos requisitos de formato da Meta; o painel não recodifica arquivos enviados com a edição desativada.
+Arquivos temporários ficam no D1 em blocos de 1 MB, acessíveis à Meta por URLs com chave aleatória, por até 24 horas. A limpeza física acontece no próximo upload; limite total de 160 MB. Esse fluxo usa `video_url`, compatível com Instagram Login, sem depender de upload resumível exclusivo do Facebook Login. O vídeo precisa atender aos requisitos de formato da Meta; o painel não recodifica nem modifica o vídeo.
 
 ## Comentários
 
@@ -35,3 +35,13 @@ Para posts existentes, selecione a oferta, configure os campos e clique em **Ass
 Se a resposta de publicação se perder, o estado fica `check_required`; confira no Instagram antes de preparar outro Reel. O painel nunca tenta publicar o mesmo container automaticamente uma segunda vez.
 
 Referências oficiais: [Instagram Login](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/), [Publicação](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/content-publishing), [Respostas privadas](https://developers.facebook.com/docs/instagram-platform/instagram-api-with-instagram-login/messaging-api/private-replies/).
+
+## Diagnóstico e ativação
+
+O painel assina `comments,messages` ao carregar a conta e ao ativar uma regra. Se a Meta recusar, o erro aparece sem impedir a visualização do histórico. Configurar a URL e o token de verificação do webhook no app Meta continua necessário; assinar a conta não substitui esse cadastro.
+
+A comparação usa a mesma normalização do projeto original: ignora caixa, acentos, pontuação e espaços extras. `EU QUERO`, `eu quero`, `Eu Quero` e `eu QUERO!` acionam a regra `EU QUERO`; palavras completas evitam correspondências acidentais.
+
+O histórico distingue evento recebido, regra ausente/pausada, palavra-chave não encontrada e erro de envio da Meta. Nenhum nome ou texto de comentário é guardado no diagnóstico. Quando o ID da conta no evento difere, o Worker confirma a propriedade da publicação pela API antes de responder. Comentários da própria conta não são descartados silenciosamente; a API determina se a resposta é permitida.
+
+Para um Reel existente, use **Ativar resposta** na lista; não é necessário republicar o vídeo. A ativação não reenvia DMs para comentários já processados. Faça um comentário novo para testar.

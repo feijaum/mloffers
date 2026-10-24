@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import worker from '../worker/index.js';
-const sql=new DatabaseSync(':memory:');for(const p of ['0001_instagram_initial.sql','0002_video_jobs.sql','0003_instagram_publishing.sql'])sql.exec(fs.readFileSync('migrations/'+p,'utf8'));
+const sql=new DatabaseSync(':memory:');for(const p of ['0001_instagram_initial.sql','0002_video_jobs.sql','0003_instagram_publishing.sql','0004_instagram_diagnostics.sql'])sql.exec(fs.readFileSync('migrations/'+p,'utf8'));
 const DB={prepare(query){let args=[];return {bind(...v){args=v.map(x=>x instanceof ArrayBuffer?new Uint8Array(x):x);return this},async first(){return sql.prepare(query).get(...args)||null},async all(){return {results:sql.prepare(query).all(...args)}},async run(){return {meta:{changes:sql.prepare(query).run(...args).changes}}}}},async batch(statements){sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
 const env={DB,VIDEO_SESSION_SECRET:'test-session-secret',VIDEO_ACCESS_PASSWORD:'test-password',INSTAGRAM_ACCESS_TOKEN:'private-token',META_APP_SECRET:'meta-secret',INSTAGRAM_VERIFY_TOKEN:'verify',ASSETS:{fetch(){return new Response('assets')}}};
 const encoder=new TextEncoder();async function hmac(text,secret){const key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);return Buffer.from(await crypto.subtle.sign('HMAC',key,encoder.encode(text))).toString('hex')}
@@ -38,3 +38,23 @@ console.log('Shared content tests OK: edited copy persists by offer and keeps af
 const forged='a'.repeat(72);r=await worker.fetch(new Request(origin+'/api/instagram/callback?state='+forged+'&code=bad',{headers:{cookie:'ig_oauth='+forged}}),env);assert.equal(r.status,403);
 r=await req('connect','POST',{appId:'123456789'});assert.equal(r.status,200);assert.match((await r.json()).url,/client_id=123456789/);assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM ig_oauth_requests').get().n,1);
 console.log('OAuth tests OK: one-time state requires an authenticated initiation and supports public app ID.');
+// Regression: the word rule works for all requested letter cases in real webhook handling.
+const {matchesKeyword}=await import('../worker/comment-matcher.js');
+const variants=['EU QUERO','eu quero','Eu quero','Eu Quero','eU qUeRo','💬 eu QUERO!!!','Eu   quero','eu\nquero','eu-quero','eu quéro'];
+for(const keyword of ['EU QUERO','eu quero','Eu Quero'])for(const comment of variants)assert.equal(matchesKeyword(comment,keyword),true,comment+' / '+keyword);
+assert.equal(matchesKeyword('requeromais','quero'),false);assert.equal(matchesKeyword('seu quero','eu quero'),false);
+await req('rule','POST',{mediaId:'444444444',...draft,active:true});
+let before=calls.filter(c=>c.url.endsWith('/messages')).length;
+for(let i=0;i<variants.length;i++){event.entry[0].id='123456789';event.entry[0].changes[0].value={id:String(900000000+i),media:{id:'444444444'},text:variants[i],from:{id:'999999999'}};assert.equal((await webhook(event)).status,200)}
+assert.equal(calls.filter(c=>c.url.endsWith('/messages')).length,before+variants.length);
+assert.ok(calls.some(c=>c.url.endsWith('/subscribed_apps')&&JSON.parse(c.options.body).subscribed_fields==='comments,messages'));
+// Alternate webhook account identifiers require verified media ownership, as in the original's fallback.
+event.entry[0].id='666666666';event.entry[0].changes[0].value.id='911111111';before=calls.filter(c=>c.url.endsWith('/messages')).length;await webhook(event);assert.equal(calls.filter(c=>c.url.endsWith('/messages')).length,before+1);
+const originalFetch=globalThis.fetch;globalThis.fetch=async(url,options)=>String(url).includes('fields=id,owner')?Response.json({id:'444444444',owner:{id:'666666666'}}):originalFetch(url,options);
+event.entry[0].changes[0].value.id='922222222';await webhook(event);assert.equal(calls.filter(c=>c.url.endsWith('/messages')).length,before+1);assert.equal(sql.prepare('SELECT status FROM ig_diagnostics WHERE id=?').get('922222222').status,'account_mismatch');
+globalThis.fetch=async(url,options)=>String(url).endsWith('/messages')?Response.json({error:{message:'Permissão de mensagens ausente',code:10}},{status:400}):originalFetch(url,options);
+event.entry[0].id='123456789';event.entry[0].changes[0].value.id='933333333';await webhook(event);await webhook(event);assert.equal(sql.prepare('SELECT dm_status FROM ig_delivery WHERE comment_id=?').get('933333333').dm_status,'check_required');assert.match(sql.prepare('SELECT detail FROM ig_diagnostics WHERE id=?').get('933333333').detail,/Meta 10/);
+globalThis.fetch=originalFetch;
+const containerRequest=calls.find(c=>c.url.endsWith('/media')&&c.options.method==='POST');assert.equal(Object.hasOwn(JSON.parse(containerRequest.options.body),'cover_url'),false);
+const ui=fs.readFileSync('docs/instagram-studio.js','utf8'),html=fs.readFileSync('docs/index.html','utf8');assert.doesNotMatch(ui,/MediaRecorder|captureStream|blobCanvas|coverId/);assert.doesNotMatch(html,/id="ig-(cover|burn|download-cover|title|subtitle|cta|support)"/);
+console.log('Comment regression tests OK: all letter cases, punctuation, ownership fallback, foreign media rejection, subscription and visible Meta failures. Original video only; no overlay/canvas/cover upload.');
