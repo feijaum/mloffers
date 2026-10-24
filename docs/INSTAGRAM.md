@@ -42,6 +42,8 @@ O painel assina `comments,messages` ao carregar a conta e ao ativar uma regra. S
 
 A comparação usa a mesma normalização do projeto original: ignora caixa, acentos, pontuação e espaços extras. `EU QUERO`, `eu quero`, `Eu Quero` e `eu QUERO!` acionam a regra `EU QUERO`; palavras completas evitam correspondências acidentais.
 
-O histórico distingue evento recebido, regra ausente/pausada, palavra-chave não encontrada e erro de envio da Meta. Nenhum nome ou texto de comentário é guardado no diagnóstico. Quando o ID da conta no evento difere, o Worker confirma a propriedade da publicação pela API antes de responder. Comentários da própria conta não são descartados silenciosamente; a API determina se a resposta é permitida.
+O histórico distingue evento recebido, regra ausente/pausada, palavra-chave não encontrada e erro de envio da Meta. Nenhum nome ou texto de comentário é guardado no diagnóstico. Quando o ID da conta no evento difere, o Worker confirma que a publicação consta na coleção de mídias da conta autenticada antes de responder, sem depender do campo owner. Comentários da própria conta não são descartados silenciosamente; a API determina se a resposta é permitida.
 
 Para um Reel existente, use **Ativar resposta** na lista; não é necessário republicar o vídeo. A ativação não reenvia DMs para comentários já processados. Faça um comentário novo para testar.
+
+A assinatura da conta em `/subscribed_apps` não configura a URL de Webhooks do aplicativo Meta. Se não houver eventos, confira no app **Observatorio ML** o callback `https://observatorio-ml.jvleite7.workers.dev/api/instagram/webhook`, o token de verificação correspondente ao Secret e o campo `comments`. O histórico registra a confirmação de callback, a chegada HTTP e a validação de assinatura separadamente. A ausência de registro de confirmação não prova que um callback validado antes desta atualização esteja incorreto.

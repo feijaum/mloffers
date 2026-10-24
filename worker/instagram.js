@@ -15,6 +15,20 @@ export async function graph(path,token,body){
  if(!response.ok||data.error)throw fail((data.error?.message||'Falha na API do Instagram (HTTP '+response.status+')')+(data.error?.code?' [Meta '+data.error.code+(data.error.error_subcode?'/'+data.error.error_subcode:'')+']':''),502);
  return data;
 }
+// Membership of the authenticated account's media collection is authoritative.
+// A media.owner ID may be absent or use a different Meta ID namespace.
+async function requireOwnedMedia(c,mediaId){
+ let after='';
+ for(let page=0;page<10;page++){
+  const query=new URLSearchParams({fields:'id',limit:'100',...(after?{after}:{})});
+  const list=await graph(c.account_id+'/media?'+query,c.accessToken);
+  if((list.data||[]).some(m=>String(m.id)===String(mediaId)))return;
+  const cursor=list.paging?.cursors?.after;
+  if(!list.paging?.next||!cursor)break;
+  after=String(cursor);
+ }
+ throw fail('Esta publicação não apareceu na lista da conta conectada. Atualize a conta e confira o Reel selecionado.',403);
+}
 async function cryptKey(env){if(!env.VIDEO_SESSION_SECRET)throw fail('Configure VIDEO_SESSION_SECRET',503);return crypto.subtle.importKey('raw',await crypto.subtle.digest('SHA-256',enc.encode(env.VIDEO_SESSION_SECRET)),'AES-GCM',false,['encrypt','decrypt'])}
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes)));
 const unb64=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
@@ -95,7 +109,7 @@ export async function instagramApi(request,env,url){try{
  }
  if(path==='/api/instagram/rule'&&method==='POST'){
   const b=await request.json();if(!validId(b.mediaId)||!validLink(b.affiliate)||!text(b.keyword,80)||!text(b.dm,900))throw fail('Preencha publicação, link HTTPS, palavra-chave e mensagem.');
-  const media=await graph(b.mediaId+'?fields=id,owner',c.accessToken);if(String(media.owner?.id||media.owner)!==String(c.account_id))throw fail('Esta publicação não pertence à conta conectada.',403);
+  await requireOwnedMedia(c,b.mediaId);
   const warning=await saveRule(env,b.mediaId,b,c);return json({success:true,warning});
  }
  if(path==='/api/instagram/pause'&&method==='POST'){await env.DB.prepare('UPDATE instagram_posts SET active=0').run();return json({success:true})}
@@ -143,7 +157,7 @@ export async function processComments(payload,env){
  // Some Meta events use a different account identifier. Verify media ownership
  // instead of silently discarding a legitimate comment or trusting another account.
  if(String(entry.id)!==String(c.account_id)){
-  try{const [m,p]=await Promise.all([graph(media+'?fields=id,owner',c.accessToken),graph('me?fields=id,user_id,username',c.accessToken)]);const owner=String(m.owner?.id||m.owner||'');const ownIds=[c.account_id,p.id,p.user_id].filter(Boolean).map(String);if(!ownIds.includes(owner))throw Error('Publicação não pertence à conta conectada.');}
+  try{await requireOwnedMedia(c,media);}
   catch(e){await diagnostic(env,id,'account_mismatch',e.message);continue}
  }
  if(!matchesKeyword(v.text,rule.keyword)){await diagnostic(env,id,'keyword_not_matched','O comentário não contém a palavra-chave configurada.');continue}
