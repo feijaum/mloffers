@@ -14,7 +14,7 @@ No app Meta configure:
 - Campo de webhook: `comments`.
 - Permissões: `instagram_business_basic`, `instagram_business_content_publish`, `instagram_business_manage_comments`, `instagram_business_manage_messages`.
 
-Na aba Instagram, entre com a senha do estúdio, clique em **Conectar Instagram**, autorize sua conta profissional e clique em **Ativar recebimento de comentários**. A Meta controla os requisitos de acesso, funções no app e aprovação das permissões.
+Na aba Instagram, entre com a senha do estúdio, informe o ID público do app Instagram em **Configuração da conexão Meta** se ele não estiver no Worker, clique em **Conectar Instagram**, autorize sua conta profissional e clique em **Ativar recebimento de comentários**. A Meta controla os requisitos de acesso, funções no app e aprovação das permissões.
 
 ## Publicar
 

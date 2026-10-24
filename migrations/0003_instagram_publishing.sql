@@ -4,3 +4,4 @@ CREATE TABLE IF NOT EXISTS ig_upload_chunks (upload_id TEXT NOT NULL, part INTEG
 CREATE TABLE IF NOT EXISTS ig_publications (id TEXT PRIMARY KEY, offer_id TEXT NOT NULL, caption TEXT NOT NULL, affiliate_url TEXT NOT NULL, keyword TEXT NOT NULL, dm TEXT NOT NULL, public_reply TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 0, container_id TEXT, media_id TEXT UNIQUE, status TEXT NOT NULL DEFAULT 'draft', error TEXT, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS ig_rules (media_id TEXT PRIMARY KEY, dm TEXT NOT NULL, public_reply TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS ig_delivery (comment_id TEXT PRIMARY KEY, media_id TEXT NOT NULL, dm_status TEXT NOT NULL, reply_status TEXT NOT NULL DEFAULT 'disabled', error TEXT, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS ig_oauth_requests (state TEXT PRIMARY KEY, app_id TEXT NOT NULL, expires_at INTEGER NOT NULL);

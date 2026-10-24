@@ -55,7 +55,7 @@ $('video').onchange=()=>{invalidate();if(videoUrl)URL.revokeObjectURL(videoUrl);
 $('download-cover').onclick=()=>guard(async()=>download(await blobCanvas(),'capa-'+(selected?.id||'reel')+'.jpg'));
 $('prepare').onclick=()=>guard(prepare);
 $('publish').onclick=()=>guard(async()=>{if(!job)throw Error('Prepare o vídeo primeiro.');$('publish').disabled=true;try{const state=await api('publication/'+job);if(state.status!=='ready'){$('publish').disabled=false;throw Error(state.error||'O vídeo ainda está em processamento.')}const result=await post('publication/'+job);job=null;report(result.warning||'Reel publicado! ID: '+result.mediaId);await Promise.all([posts(),history()]);}finally{if(job)$('publish').disabled=false}});
-$('connect').onclick=()=>guard(async()=>{const r=await post('connect');location.assign(r.url)});
+$('connect').onclick=()=>guard(async()=>{const r=await post('connect',{appId:$('app-id').value.trim()});location.assign(r.url)});
 $('sync').onclick=()=>guard(async()=>{await post('sync');report('Recebimento de comentários ativado. Confira o webhook no aplicativo Meta.')});
 $('reload').onclick=()=>guard(reload);
 $('pause').onclick=()=>guard(async()=>{await post('pause');report('Todas as automações foram pausadas.');await posts()});

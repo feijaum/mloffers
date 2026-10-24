@@ -34,3 +34,7 @@ const a={id:'MLB111111111',title:'Fone Bluetooth',affiliate:'https://example.com
 const b={id:'MLB222222222',title:'Panela'};
 saveCopy(a.id,{title:'Minha capa',cta:'Comente EU QUERO'});assert.equal(loadCopy(a).title,'Minha capa');assert.notEqual(loadCopy(b).title,'Minha capa');assert.match(loadCopy(a).caption,/https:\/\/example.com\/a/);
 console.log('Shared content tests OK: edited copy persists by offer and keeps affiliate caption.');
+// A forged state cookie must not authorize an account change without an admin-created request.
+const forged='a'.repeat(72);r=await worker.fetch(new Request(origin+'/api/instagram/callback?state='+forged+'&code=bad',{headers:{cookie:'ig_oauth='+forged}}),env);assert.equal(r.status,403);
+r=await req('connect','POST',{appId:'123456789'});assert.equal(r.status,200);assert.match((await r.json()).url,/client_id=123456789/);assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM ig_oauth_requests').get().n,1);
+console.log('OAuth tests OK: one-time state requires an authenticated initiation and supports public app ID.');

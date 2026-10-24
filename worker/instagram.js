@@ -50,8 +50,11 @@ export async function instagramApi(request,env,url){try{
  if(path==='/api/instagram/callback'&&method==='GET'){
   const cookie=(request.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith('ig_oauth='))?.slice(9);
   if(!cookie||cookie!==url.searchParams.get('state')||cookie.length<32)throw fail('Estado OAuth inválido. Inicie a conexão pelo painel.',403);
+  const pending=await env.DB.prepare('SELECT app_id FROM ig_oauth_requests WHERE state=?1 AND expires_at>?2').bind(cookie,Date.now()).first();
+  if(!pending)throw fail('Conexão não iniciada pelo painel ou expirada.',403);
+  const claim=await env.DB.prepare('DELETE FROM ig_oauth_requests WHERE state=?1').bind(cookie).run();if(!claim.meta.changes)throw fail('Autorização já utilizada.',403);
   if(url.searchParams.has('error'))throw fail('Autorização cancelada no Instagram.');
-  const form=new URLSearchParams({client_id:env.INSTAGRAM_APP_ID||env.META_APP_ID,client_secret:env.META_APP_SECRET,grant_type:'authorization_code',redirect_uri:url.origin+'/api/instagram/callback',code:url.searchParams.get('code')||''});
+  const form=new URLSearchParams({client_id:pending.app_id,client_secret:env.META_APP_SECRET,grant_type:'authorization_code',redirect_uri:url.origin+'/api/instagram/callback',code:url.searchParams.get('code')||''});
   const response=await fetch('https://api.instagram.com/oauth/access_token',{method:'POST',body:form});const short=await response.json();if(!response.ok||!short.access_token)throw fail('Não foi possível concluir a autorização Meta.',502);
   const exchange=new URL('https://graph.instagram.com/access_token');exchange.search=new URLSearchParams({grant_type:'ig_exchange_token',client_secret:env.META_APP_SECRET,access_token:short.access_token});
   const longResponse=await fetch(exchange);const long=await longResponse.json();if(!longResponse.ok||!long.access_token)throw fail('Falha ao obter token de longa duração.',502);
@@ -61,8 +64,10 @@ export async function instagramApi(request,env,url){try{
  if(!await session(request,env))return json({error:'Entre com a senha do painel.'},401);
  if(method!=='GET'&&!sameOrigin(request))return json({error:'Origem inválida'},403);
  if(path==='/api/instagram/connect'&&method==='POST'){
-  if(!(env.INSTAGRAM_APP_ID||env.META_APP_ID)||!env.META_APP_SECRET)throw fail('Configure INSTAGRAM_APP_ID e META_APP_SECRET no Worker.',503);
-  const state=crypto.randomUUID()+crypto.randomUUID();const target=new URL('https://www.instagram.com/oauth/authorize');target.search=new URLSearchParams({client_id:env.INSTAGRAM_APP_ID||env.META_APP_ID,redirect_uri:url.origin+'/api/instagram/callback',response_type:'code',scope:scopes.join(','),state,enable_fb_login:'0',force_authentication:'1'});
+  const input=await request.json().catch(()=>({}));const appId=text(input.appId||env.INSTAGRAM_APP_ID||env.META_APP_ID,32);
+  if(!/^\d{5,32}$/.test(appId))throw fail('Informe o ID público do aplicativo Instagram para iniciar a autorização.');
+  if(!env.META_APP_SECRET)throw fail('Configure META_APP_SECRET no Worker.',503);
+  const state=crypto.randomUUID()+crypto.randomUUID();await env.DB.prepare('DELETE FROM ig_oauth_requests WHERE expires_at<?1').bind(Date.now()).run();await env.DB.prepare('INSERT INTO ig_oauth_requests (state,app_id,expires_at) VALUES (?1,?2,?3)').bind(state,appId,Date.now()+600000).run();const target=new URL('https://www.instagram.com/oauth/authorize');target.search=new URLSearchParams({client_id:appId,redirect_uri:url.origin+'/api/instagram/callback',response_type:'code',scope:scopes.join(','),state,enable_fb_login:'0',force_authentication:'1'});
   return json({url:target.href},200,{'set-cookie':stateCookie(state,600)});
  }
  if(path==='/api/instagram/status'){
