@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'worker/**'
+      - 'tests/**'
       - 'migrations/**'
       - 'wrangler.jsonc'
       - '.github/workflows/deploy-observatorio.yml'

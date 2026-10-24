@@ -3,7 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import worker from '../worker/index.js';
 const sql=new DatabaseSync(':memory:');for(const p of ['0001_instagram_initial.sql','0002_video_jobs.sql','0003_instagram_publishing.sql'])sql.exec(fs.readFileSync('migrations/'+p,'utf8'));
-const DB={prepare(query){let args=[];return {bind(...v){args=v;return this},async first(){return sql.prepare(query).get(...args)||null},async all(){return {results:sql.prepare(query).all(...args)}},async run(){return {meta:{changes:sql.prepare(query).run(...args).changes}}}}},async batch(statements){sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
+const DB={prepare(query){let args=[];return {bind(...v){args=v.map(x=>x instanceof ArrayBuffer?new Uint8Array(x):x);return this},async first(){return sql.prepare(query).get(...args)||null},async all(){return {results:sql.prepare(query).all(...args)}},async run(){return {meta:{changes:sql.prepare(query).run(...args).changes}}}}},async batch(statements){sql.exec('BEGIN');try{const out=[];for(const s of statements)out.push(await s.run());sql.exec('COMMIT');return out}catch(e){sql.exec('ROLLBACK');throw e}}};
 const env={DB,VIDEO_SESSION_SECRET:'test-session-secret',VIDEO_ACCESS_PASSWORD:'test-password',INSTAGRAM_ACCESS_TOKEN:'private-token',META_APP_SECRET:'meta-secret',INSTAGRAM_VERIFY_TOKEN:'verify',ASSETS:{fetch(){return new Response('assets')}}};
 const encoder=new TextEncoder();async function hmac(text,secret){const key=await crypto.subtle.importKey('raw',encoder.encode(secret),{name:'HMAC',hash:'SHA-256'},false,['sign']);return Buffer.from(await crypto.subtle.sign('HMAC',key,encoder.encode(text))).toString('hex')}
 const expiry=String(Date.now()+3600000),cookie='video_session='+expiry+'.'+await hmac(expiry,env.VIDEO_SESSION_SECRET);
@@ -12,7 +12,7 @@ let calls=[],publishCalls=0;globalThis.fetch=async(url,options={})=>{url=String(
 assert.equal((await req('history','GET',undefined,false)).status,401);
 const csrf=await worker.fetch(new Request(origin+'/api/instagram/pause',{method:'POST',headers:{cookie,origin:'https://evil.example'}}),env);assert.equal(csrf.status,403);
 let r=await req('upload','POST',{mime:'video/mp4',size:3});const upload=await r.json();assert.ok(upload.id);
-r=await worker.fetch(new Request(origin+'/api/instagram/upload/'+upload.id+'/0',{method:'PUT',headers:{cookie,origin},body:new Uint8Array([1,2,3])}),env);assert.equal(r.status,200);
+r=await worker.fetch(new Request(origin+'/api/instagram/upload/'+upload.id+'/0',{method:'PUT',headers:{cookie,origin},body:new Uint8Array([1,2,3])}),env);assert.equal(r.status,200,await r.text());
 const row=sql.prepare('SELECT * FROM ig_uploads WHERE id=?').get(upload.id);
 assert.equal((await req('media/'+upload.id+'?key=wrong','GET',undefined,false)).status,404);
 r=await worker.fetch(new Request(origin+'/api/instagram/media/'+upload.id+'?key='+row.secret,{headers:{range:'bytes=1-2'}}),env);assert.equal(r.status,206);assert.deepEqual([...new Uint8Array(await r.arrayBuffer())],[2,3]);
