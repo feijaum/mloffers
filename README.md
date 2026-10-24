@@ -67,7 +67,7 @@ Em **Montar publicação**, cada produto pode reunir:
 
 - imagem e link público do anúncio;
 - prompt orientado ao **Veo no Google Flow**;
-- legenda para Instagram com o link da oferta na própria publicação;
+- legenda para Instagram com preço anterior e atual da captura, deixando o link de afiliado somente na DM;
 - chamada para comentar **“EU QUERO”**;
 - modelo de mensagem para responder ao comentário por DM;
 - campo para inserir o **link de afiliado** gerado pelos canais oficiais.
@@ -128,7 +128,7 @@ mloffers/
 - **Acesso às ofertas:** a extensão não é uma API oficial do Mercado Livre, não contorna CAPTCHA ou bloqueios e não garante acesso a todas as páginas. Use-a apenas quando a coleta for permitida.
 - **Ofertas e desempenho:** preço riscado não comprova queda histórica, e a pontuação do ranking não é uma taxa medida de conversão, alcance ou comissão.
 - **Instagram e Veo:** a publicação de Reels e a automação de DMs funcionam no Worker conectado à sua conta profissional, com senha e ativação por publicação. A geração no Flow continua manual; o modelo é selecionado na interface do Google.
-- **Links nas legendas:** o link pode constar no texto da publicação, mas sua apresentação como link clicável depende dos recursos disponibilizados pelo Instagram.
+- **Links de afiliado:** enviados somente por DM. A legenda do Instagram mostra “De… por…” quando há preço anterior válido na captura; caso contrário, mostra apenas o preço atual.
 
 ## Desenvolvimento e documentação
 

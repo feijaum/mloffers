@@ -1,3 +1,4 @@
+import { buildInstagramCaption } from "./content-copy.js";
 /* Observatório ML - Web offline-first. Nunca solicita páginas do Mercado Livre. */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -133,9 +134,8 @@ function makeFlow(x){
   "Somente vídeo visual e áudio, sem qualquer texto publicitário sobreposto."
  ].join("\n");
 }
-function makeCaption(x){const link=x.affiliate||x.url||'[COLE SEU LINK DE AFILIADO]';
- return ['✨ ACHADO DO DIA!','',x.title,'💰 Preço na captura: '+money(x.price)+(x.discount!=null?' ('+x.discount+'% OFF anunciado)':''),x.pix?'📲 Valor exibido no Pix; confira as condições.':'',x.couponPrice!=null||x.couponDiscount!=null?'🎟️ Pode haver cupom sujeito à elegibilidade.':'','', '💬 Quer receber a oferta? Comente EU QUERO que eu te envio o link por mensagem!','','🔗 Link da oferta nesta publicação: '+link,'','Publicidade / link de afiliado. Preço e disponibilidade podem mudar; confira antes de comprar.','#achadinhos #ofertas #mercadolivre'].filter(Boolean).join('\n')}
-function makeDM(x){return ['Olá, @{{nome}}! 👋','Você comentou EU QUERO na nossa publicação sobre: '+x.title,'','🔗 Confira a oferta aqui: '+(x.affiliate||x.url||'[INSIRA SEU LINK DE AFILIADO]'),'','Veja o preço, frete e condições atuais antes de finalizar a compra.','', 'Mensagem automática enviada em resposta ao seu comentário.'].join('\n')}
+function makeCaption(x){return buildInstagramCaption(x)+'\n\n#achadinhos #ofertas #mercadolivre'}
+function makeDM(x){return ['Olá, @{{nome}}! 👋','Você comentou EU QUERO na nossa publicação sobre: '+x.title,'','🔗 Confira a oferta aqui: '+(x.affiliate||'[INSIRA SEU LINK DE AFILIADO]'),'','Veja o preço, frete e condições atuais antes de finalizar a compra.','', 'Mensagem automática enviada em resposta ao seu comentário.'].join('\n')}
 function kitText(x){return ['PRODUTO: '+x.title,'ID: '+x.id,'PREÇO NA CAPTURA: '+money(x.price),'IMAGEM: '+(x.image||'(não disponível)'),'URL ORIGINAL: '+(x.url||'(não disponível)'),'LINK DE AFILIADO: '+(x.affiliate||'[INSERIR]'),'PALAVRA CHAVE: eu quero','','=== VEO / GOOGLE FLOW ===',makeFlow(x),'','=== LEGENDA INSTAGRAM ===',makeCaption(x),'','=== MENSAGEM DM ===',makeDM(x)].join('\n')}
 function active(){return offers.find(x=>x.id===activeId)}
 function updateKitFields(){const x=active();if(!x)return;$('prompt').value=makeFlow(x);$('caption').value=makeCaption(x);$('dm').value=makeDM(x)}

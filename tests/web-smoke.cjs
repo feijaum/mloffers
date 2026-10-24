@@ -2,10 +2,12 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const src = fs.readFileSync('docs/app.js', 'utf8');
+(async()=>{
+const {buildInstagramCaption}=await import('../docs/content-copy.js');
+const src = fs.readFileSync('docs/app.js', 'utf8').replace(/^import[^\n]+;\n/gm,'');
 const stop = src.indexOf("$('files').addEventListener");
 assert.ok(stop > 0,'Missing event-handler bootstrap marker');
-const scope = {URL, Date, console, setTimeout, clearTimeout};
+const scope = {URL, Date, console, setTimeout, clearTimeout, buildInstagramCaption};
 vm.createContext(scope);
 vm.runInContext(src.slice(0,stop)+';globalThis.TEST={parseOfferHTML,parseCSV,parseJSON,makeFlow,makeCaption,makeDM,score,normalize};',scope);
 const t = scope.TEST;
@@ -27,7 +29,7 @@ assert.equal(rows[0].discount,65);assert.equal(rows[0].rating,4.9);
 assert.ok(rows[0].image.includes('http2.mlstatic.com'));assert.equal(rows[0].pix,true);
 const product={...rows[0],affiliate:'https://www.mercadolivre.com.br/meu-link'};
 assert.match(t.makeFlow(product),/GOOGLE FLOW/i);assert.match(t.makeFlow(product),/NÃO adicionar nenhum texto/);assert.match(t.makeFlow(product),/EU QUERO/);
-assert.match(t.makeCaption(product),/Comente EU QUERO/);assert.match(t.makeCaption(product),/https:\/\/www.mercadolivre.com.br\/meu-link/);
+assert.match(t.makeCaption(product),/Comente EU QUERO/);assert.doesNotMatch(t.makeCaption(product),/https?:\/\//);assert.match(t.makeCaption(product),/De R\$\s*199,90 por R\$\s*68,90/);
 assert.doesNotMatch(t.makeCaption(product),/link na bio/i);
 assert.match(t.makeDM(product),/https:\/\/www.mercadolivre.com.br\/meu-link/);
 const csv='item_id,title,price,image_url\nMLB1234567890,"Câmera WiFi segurança",68.90,https://http2.mlstatic.com/test.webp';
@@ -36,3 +38,5 @@ assert.equal(t.parseJSON(JSON.stringify({offers:[product]}))[0].affiliate,produc
 const evaluated=t.score({...rows[0],lastSeen:Date.now()});
 assert.ok(evaluated.priority>=0&&evaluated.priority<=100);
 console.log('Web smoke-test OK: cards, preço, imagem, prompt Veo, legenda, DM, CSV, JSON, ranking.');
+
+})().catch(e=>{console.error(e);process.exitCode=1});

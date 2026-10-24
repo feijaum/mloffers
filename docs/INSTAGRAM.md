@@ -53,3 +53,9 @@ A assinatura da conta em `/subscribed_apps` não configura a URL de Webhooks do 
 O webhook aceita `INSTAGRAM_VERIFY_TOKEN` e, se não estiver definido, `META_WEBHOOK_VERIFY_TOKEN` (nome utilizado no instagram-comment-dm). Se os dois estiverem configurados, `INSTAGRAM_VERIFY_TOKEN` tem prioridade. Esse token confirma a URL no GET; ele não valida a assinatura dos eventos POST.
 
 A assinatura usa o corpo bruto recebido e `META_APP_SECRET` em HMAC-SHA256, como no código original. O diagnóstico distingue cabeçalho de assinatura ausente, formato inválido e assinatura bem formada divergente. Nenhum segredo nem assinatura calculada é exibido. Cada Worker deve usar o App Secret do aplicativo que assina os eventos enviados ao seu callback; nomes de variáveis iguais não comprovam valores iguais.
+
+## Legenda com preços e link privado
+
+As legendas de Conteúdo, do kit de ofertas e da publicação Instagram mostram o preço anterior e o atual da captura: “De R$ X por R$ Y”. Sem preço anterior válido maior que o atual, mostram somente “Por R$ Y”; nenhum preço é calculado a partir do desconto anunciado. Condições de Pix são preservadas.
+
+O link de afiliado preenchido no formulário fica na regra de DM, sem ser inserido na legenda. Rascunhos antigos contendo linhas automáticas de link são atualizados no carregamento, preservando os demais textos e inserindo os preços. A mudança vale para a preparação das próximas publicações; não edita os Reels já publicados.

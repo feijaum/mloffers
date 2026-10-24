@@ -32,8 +32,8 @@ const memory=new Map();globalThis.localStorage={getItem:k=>memory.get(k)??null,s
 const {loadCopy,saveCopy}=await import('../docs/content-copy.js');
 const a={id:'MLB111111111',title:'Fone Bluetooth',affiliate:'https://example.com/a'};
 const b={id:'MLB222222222',title:'Panela'};
-saveCopy(a.id,{title:'Minha capa',cta:'Comente EU QUERO'});assert.equal(loadCopy(a).title,'Minha capa');assert.notEqual(loadCopy(b).title,'Minha capa');assert.match(loadCopy(a).caption,/https:\/\/example.com\/a/);
-console.log('Shared content tests OK: edited copy persists by offer and keeps affiliate caption.');
+saveCopy(a.id,{title:'Minha capa',cta:'Comente EU QUERO'});assert.equal(loadCopy(a).title,'Minha capa');assert.notEqual(loadCopy(b).title,'Minha capa');assert.doesNotMatch(loadCopy(a).caption,/https?:\/\//);
+console.log('Shared content tests OK: edited copy persists by offer and keeps affiliate links out of the caption.');
 // A forged state cookie must not authorize an account change without an admin-created request.
 const forged='a'.repeat(72);r=await worker.fetch(new Request(origin+'/api/instagram/callback?state='+forged+'&code=bad',{headers:{cookie:'ig_oauth='+forged}}),env);assert.equal(r.status,403);
 r=await req('connect','POST',{appId:'123456789'});assert.equal(r.status,200);assert.match((await r.json()).url,/client_id=123456789/);assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM ig_oauth_requests').get().n,1);
@@ -79,3 +79,15 @@ assert.equal((await validateMetaSignature(rawBytes,'sha256=bad','app-specific-se
 assert.equal(webhookVerifyToken({META_WEBHOOK_VERIFY_TOKEN:'legacy'}),'legacy');assert.equal(webhookVerifyToken({INSTAGRAM_VERIFY_TOKEN:'current',META_WEBHOOK_VERIFY_TOKEN:'legacy'}),'current');
 const legacyEnv={...env,INSTAGRAM_VERIFY_TOKEN:undefined,META_WEBHOOK_VERIFY_TOKEN:'legacy-verify'};r=await worker.fetch(new Request(origin+'/api/instagram/webhook?hub.mode=subscribe&hub.verify_token=legacy-verify&hub.challenge=legacy-ok'),legacyEnv);assert.equal(await r.text(),'legacy-ok');
 console.log('Signature tests OK: independent raw-body HMAC, wrong secret rejection, header diagnostics, original verification-token name and precedence.');
+// Public captions use captured prices; only DM receives the saved affiliate URL.
+const {buildInstagramCaption,offerPriceLine,privateLinkCaption}=await import('../docs/content-copy.js');
+const priced={id:'MLB555555555',title:'Liquidificador',price:109.9,previous:199.9,affiliate:'https://example.com/affiliate',url:'https://example.com/captured'};
+assert.match(buildInstagramCaption(priced),/De R\$\s*199,90 por R\$\s*109,90/);assert.doesNotMatch(buildInstagramCaption(priced),/https?:\/\//);assert.match(buildInstagramCaption(priced),/Comente EU QUERO/);
+for(const previous of [null,undefined,'',0,99.9,109.9,NaN]){const line=offerPriceLine({...priced,previous});assert.match(line,/Por R\$\s*109,90/);assert.doesNotMatch(line,/De R\$/)}
+assert.match(offerPriceLine({...priced,pix:true}),/no Pix$/);assert.equal(offerPriceLine({...priced,price:null}),'');
+saveCopy(priced.id,{title:'Minha edição',caption:'Minha abertura\n\n🔗 Consulte a oferta: https://example.com/captured\n\nComente EU QUERO',hashtags:'#minhaTag'});
+let migrated=loadCopy(priced);assert.equal(migrated.title,'Minha edição');assert.equal(migrated.hashtags,'#minhaTag');assert.match(migrated.caption,/Minha abertura/);assert.match(migrated.caption,/De R\$\s*199,90 por R\$\s*109,90/);assert.doesNotMatch(migrated.caption,/https?:\/\/|Consulte a oferta/);
+const oldKit='Texto editado\n💰 Preço na captura: R$ 90,00\n🔗 Link da oferta nesta publicação: https://example.com/affiliate';const cleaned=privateLinkCaption(priced,oldKit);assert.equal((cleaned.match(/💰/g)||[]).length,1);assert.match(cleaned,/109,90/);assert.doesNotMatch(cleaned,/https?:\/\//);
+assert.equal(privateLinkCaption(priced,'Minha legenda sem URL.'),'Minha legenda sem URL.');
+assert.doesNotMatch(fs.readFileSync('docs/instagram-studio.js','utf8'),/replace\(\/\^🔗/);
+console.log('Caption regression tests OK: captured before/after prices, no invented previous price, Pix, legacy draft migration, no public URLs and private affiliate delivery.');
