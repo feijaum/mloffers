@@ -155,6 +155,41 @@ async function loadPublishedFeed(){
   await refresh();toast('Feed importado: '+r.found+' novos produtos; '+r.updated+' atualizados.');
  }catch(error){toast('Não foi possível carregar o feed: '+error.message)}
 }
+
+function parseAffiliateCSV(text){
+ text=text.replace(/^\uFEFF/,'');let rows=[],row=[],cell='',quoted=false;
+ for(let i=0;i<text.length;i++){const ch=text[i];if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"')quoted=false;else cell+=ch}else if(ch==='"')quoted=true;else if(ch===','){row.push(cell);cell=''}else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell=''}else if(ch!=='\r')cell+=ch}
+ if(cell||row.length){row.push(cell);rows.push(row)}
+ if(!rows.length)throw Error('Arquivo CSV vazio.');
+ const cols=rows.shift().map(x=>x.trim().toLowerCase()),idCol=cols.findIndex(x=>['id','item_id'].includes(x)),linkCol=cols.findIndex(x=>['affiliate','affiliate_url','link_afiliado'].includes(x));
+ if(idCol<0||linkCol<0)throw Error('O CSV deve conter as colunas id e affiliate.');
+ const records=new Map();let invalid=0;
+ for(const r of rows){const id=String(r[idCol]||'').trim().toUpperCase(),link=String(r[linkCol]||'').trim();
+  if(!id&&!link)continue;
+  if(!/^MLB\d{7,14}$/.test(id)||!/^https:\/\/meli\.la\/[a-zA-Z0-9_-]+\/?$/.test(link)){invalid++;continue}
+  records.set(id,link);
+ }
+ return {records,invalid};
+}
+async function importAffiliateCSV(file){
+ const status=$('affiliate-import-status');status.textContent='Lendo links de afiliados...';
+ try{
+  if(!file||!/\.csv$/i.test(file.name))throw Error('Selecione um arquivo CSV.');
+  const {records,invalid}=parseAffiliateCSV(await file.text());
+  if(!records.size)throw Error('O arquivo não contém links meli.la válidos.');
+  let changed=0,missing=0;const tx=db.transaction('offers','readwrite'),store=tx.objectStore('offers');
+  for(const [id,affiliate] of records){const current=await reqPromise(store.get(id));
+   if(!current){missing++;continue}
+   if(current.affiliate!==affiliate){store.put({...current,affiliate});changed++}
+  }
+  await new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)});
+  await refresh();
+  status.textContent='Links atualizados: '+changed+' · IDs não encontrados: '+missing+' · Linhas inválidas: '+invalid+'. Outros dados preservados.';
+  toast('Atualização de afiliados concluída.');
+ }catch(e){status.textContent='Erro: '+e.message;}
+}
+$('affiliate-csv').addEventListener('change',async e=>{const file=e.target.files[0];await importAffiliateCSV(file);e.target.value=''});
+
 $('files').addEventListener('change',e=>importFiles(e.target.files));
 $('load-feed').onclick=loadPublishedFeed;
 const drop=$('drop');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');importFiles(e.dataTransfer.files)});
