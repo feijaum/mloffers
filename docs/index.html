@@ -173,6 +173,7 @@
 <script>
 (function(){const tabs=[...document.querySelectorAll('[data-tab]')],panes=[...document.querySelectorAll('[data-pane]')];function show(name){if(!tabs.some(t=>t.dataset.tab===name))name='ofertas';tabs.forEach(t=>{const active=t.dataset.tab===name;t.classList.toggle('active',active);t.setAttribute('aria-selected',String(active))});panes.forEach(p=>p.hidden=p.dataset.pane!==name);history.replaceState(null,'','#'+name);window.scrollTo({top:0,behavior:'instant'});}tabs.forEach(t=>t.addEventListener('click',()=>show(t.dataset.tab)));document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.goto)));document.querySelectorAll('a[href="#importar"],a[href="#ranking"]').forEach(a=>a.addEventListener('click',()=>show('ofertas')));show(['ofertas','conteudo','instagram','threads','config'].includes(location.hash.slice(1))?location.hash.slice(1):'ofertas');})();
 </script>
+<script defer src="./affiliate-import.js?v=2"></script>
 <script type="module" src="./app.js"></script>
 <script type="module" src="./video-studio.js"></script>
 <script type="module" src="./instagram-studio.js"></script>
