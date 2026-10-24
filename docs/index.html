@@ -22,6 +22,11 @@
 <div class="hero-buttons"><a class="btn primary" href="#importar">+ Importar ofertas</a><a class="btn secondary" href="#ranking">Ver ranking ↓</a></div>
 </section>
 <div class="notice" id="notice"><b>Consulta ao vivo:</b> esta versão pública funciona no celular, mas não acessa automaticamente as ofertas do Mercado Livre. Importe HTMLs ou CSVs gerados pela sua coleta autorizada. Os dados ficam armazenados neste dispositivo.</div>
+<section class="panel" id="affiliate-import-panel">
+<div class="panel-head"><div><div class="eyebrow">LINKS DE AFILIADOS · TOP 20</div><h2>Atualizar links de divulgação</h2><p>Importe o CSV <b>observatorio-top20-afiliados.csv</b> gerado pela extensão. A atualização utiliza o ID MLB de cada produto e preserva preço, imagem, descrição e posição no ranking.</p></div></div>
+<label class="field"><span>CSV de links (colunas <b>id,affiliate</b>)</span><input id="affiliate-csv" type="file" accept=".csv,text/csv"></label>
+<p id="affiliate-import-status" class="fine" role="status" aria-live="polite">Nenhum arquivo importado.</p>
+</section>
 <div class="stats">
 <div class="metric"><small>PRODUTOS NO DISPOSITIVO</small><strong id="stat-products">0</strong><span>anúncios consolidados</span></div>
 <div class="metric"><small>CAPTURAS IMPORTADAS</small><strong id="stat-files">0</strong><span>arquivos processados</span></div>
