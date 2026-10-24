@@ -194,7 +194,15 @@ $('files').addEventListener('change',e=>importFiles(e.target.files));
 $('load-feed').onclick=loadPublishedFeed;
 const drop=$('drop');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');importFiles(e.dataTransfer.files)});
 $('search').addEventListener('input',renderRanking);$('sort').addEventListener('change',renderRanking);$('limit').addEventListener('change',renderRanking);
-$('clear').onclick=clearDatabase;$('export-csv').onclick=exportCSV;$('export-json').onclick=()=>{download('observatorio-backup.json',JSON.stringify({format:'observatorio-ml-offers',version:1,offers},null,2),'application/json');toast('Backup JSON exportado.')};
+$('clear').onclick=clearDatabase;$('export-csv').onclick=exportCSV;
+$('export-top20').onclick=()=>{
+ const cols=['id','title','url'],rows=ordered().slice(0,20);
+ if(!rows.length){toast('Nenhum produto no ranking.');return;}
+ const val=x=>'"'+String(x??'').replace(/"/g,'""')+'"';
+ const content='\uFEFF'+[cols.join(','),...rows.map(x=>cols.map(k=>val(x[k])).join(','))].join('\r\n');
+ download('observatorio-top20-para-extensao.csv',content,'text/csv;charset=utf-8');
+ toast(rows.length+' itens exportados na ordem do ranking.');
+};$('export-json').onclick=()=>{download('observatorio-backup.json',JSON.stringify({format:'observatorio-ml-offers',version:1,offers},null,2),'application/json');toast('Backup JSON exportado.')};
 $('close-dialog').onclick=()=>$('kit-dialog').close();$('kit-dialog').onclick=e=>{if(e.target===$('kit-dialog'))e.target.close()};
 let saveLinkTimer;$('affiliate').addEventListener('input',e=>{const x=active();if(!x)return;clearTimeout(saveLinkTimer);const raw=e.target.value.trim(),valid=affiliateUrl(raw);if(raw&&!valid){toast('Cole um link HTTPS válido.');return}x.affiliate=valid;updateKitFields();saveLinkTimer=setTimeout(()=>saveAffiliate(x.id,valid).catch(err=>toast(err.message)),350)});
 document.querySelectorAll('[data-copy-field]').forEach(b=>b.onclick=()=>copy($(b.dataset.copyField).value));
